@@ -79,21 +79,147 @@
     ];
   }
 
+  class SupabaseRestClient {
+    constructor(url, key) {
+      this.url = url;
+      this.key = key;
+      this.sessionKey = "semporna-supabase-session-v1";
+      this.session = this.loadSessionFromUrl() || this.loadSession();
+      this.auth = {
+        getSession: async () => {
+          await this.ensureSession();
+          return { data: { session: this.session }, error: null };
+        },
+        signInWithPassword: credentials => this.signInWithPassword(credentials),
+        signUp: credentials => this.signUp(credentials),
+        signOut: () => this.signOut(),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } })
+      };
+    }
+    loadSession() {
+      try { return JSON.parse(localStorage.getItem(this.sessionKey)); }
+      catch { return null; }
+    }
+    loadSessionFromUrl() {
+      const params = new URLSearchParams(location.hash.slice(1));
+      const accessToken = params.get("access_token");
+      if (!accessToken) return null;
+      const session = {
+        access_token: accessToken,
+        refresh_token: params.get("refresh_token"),
+        expires_at: Math.floor(Date.now() / 1000) + Number(params.get("expires_in") || 3600),
+        user: this.userFromToken(accessToken)
+      };
+      localStorage.setItem(this.sessionKey, JSON.stringify(session));
+      history.replaceState(null, "", `${location.pathname}${location.search}#/overview`);
+      return session;
+    }
+    userFromToken(token) {
+      try {
+        let encoded = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        encoded += "=".repeat((4 - encoded.length % 4) % 4);
+        const payload = JSON.parse(atob(encoded));
+        return { id: payload.sub, email: payload.email };
+      } catch { return null; }
+    }
+    saveSession(session) {
+      this.session = session;
+      if (session) localStorage.setItem(this.sessionKey, JSON.stringify(session));
+      else localStorage.removeItem(this.sessionKey);
+    }
+    normalizeSession(data) {
+      if (!data?.access_token) return null;
+      return {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: data.expires_at || Math.floor(Date.now() / 1000) + Number(data.expires_in || 3600),
+        user: data.user || this.userFromToken(data.access_token)
+      };
+    }
+    async request(path, options = {}, authenticated = true) {
+      if (authenticated) await this.ensureSession();
+      const headers = {
+        apikey: this.key,
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      };
+      if (authenticated && this.session?.access_token) headers.Authorization = `Bearer ${this.session.access_token}`;
+      try {
+        const response = await fetch(`${this.url}${path}`, { ...options, headers });
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
+        if (!response.ok) {
+          return { data: null, error: { code: data?.code || String(response.status), message: data?.msg || data?.message || "请求失败" } };
+        }
+        return { data, error: null };
+      } catch (error) {
+        return { data: null, error: { code: "NETWORK_ERROR", message: error.message } };
+      }
+    }
+    async ensureSession() {
+      if (!this.session?.refresh_token) return this.session;
+      if (Number(this.session.expires_at || 0) > Math.floor(Date.now() / 1000) + 60) return this.session;
+      const result = await this.request("/auth/v1/token?grant_type=refresh_token", {
+        method: "POST", body: JSON.stringify({ refresh_token: this.session.refresh_token })
+      }, false);
+      if (result.error) {
+        this.saveSession(null);
+        return null;
+      }
+      this.saveSession(this.normalizeSession(result.data));
+      return this.session;
+    }
+    async signInWithPassword({ email, password }) {
+      const result = await this.request("/auth/v1/token?grant_type=password", {
+        method: "POST", body: JSON.stringify({ email, password })
+      }, false);
+      if (!result.error) {
+        const session = this.normalizeSession(result.data);
+        this.saveSession(session);
+        result.data = { ...result.data, session, user: session.user };
+      }
+      return result;
+    }
+    async signUp({ email, password, options = {} }) {
+      const redirect = options.emailRedirectTo ? `?redirect_to=${encodeURIComponent(options.emailRedirectTo)}` : "";
+      const result = await this.request(`/auth/v1/signup${redirect}`, {
+        method: "POST", body: JSON.stringify({ email, password })
+      }, false);
+      if (!result.error) {
+        const session = this.normalizeSession(result.data);
+        if (session) this.saveSession(session);
+        result.data = { ...result.data, session, user: result.data?.user || session?.user || null };
+      }
+      return result;
+    }
+    async signOut() {
+      if (this.session?.access_token) {
+        await this.request("/auth/v1/logout", { method: "POST" });
+      }
+      this.saveSession(null);
+      return { error: null };
+    }
+    from(table) {
+      return {
+        select: async () => this.request(`/rest/v1/${table}?select=*`, { method: "GET" }),
+        upsert: async payload => this.request(`/rest/v1/${table}`, {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify(payload)
+        })
+      };
+    }
+  }
+
   class TripStore {
     constructor() {
       this.items = this.load();
       this.user = null;
-      this.cloud = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY) || null;
+      this.cloud = new SupabaseRestClient(SUPABASE_URL, SUPABASE_KEY);
       this.listeners = new Set();
       this.fresh = !localStorage.getItem(STORAGE_KEY);
       this.syncing = false;
       this.save();
-    }
-    connectCloud() {
-      if (!this.cloud && window.supabase) {
-        this.cloud = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      }
-      return Boolean(this.cloud);
     }
     load() {
       try {
@@ -184,8 +310,6 @@
       this.emit("synced");
     }
     async signIn(email, password) {
-      this.connectCloud();
-      if (!this.cloud) return { error: new Error("云同步组件加载失败，请刷新页面或更换网络后重试") };
       const result = await this.cloud.auth.signInWithPassword({ email, password });
       if (!result.error) {
         this.user = result.data.user;
@@ -195,8 +319,6 @@
       return result;
     }
     signUp(email, password) {
-      this.connectCloud();
-      if (!this.cloud) return Promise.resolve({ error: new Error("云同步组件加载失败，请刷新页面或更换网络后重试") });
       return this.cloud.auth.signUp({
         email, password,
         options: { emailRedirectTo: window.location.href.split("#")[0] }
@@ -572,14 +694,6 @@
   bind();
   updateAccount("auth");
   render();
-  if (store.connectCloud()) {
-    store.initializeAuth();
-  } else {
-    window.addEventListener("supabase-ready", () => {
-      store.connectCloud();
-      store.initializeAuth();
-    }, { once: true });
-    window.addEventListener("supabase-unavailable", () => updateAccount("cloud-error"), { once: true });
-  }
+  store.initializeAuth();
   window.addEventListener("focus", () => { if (store.user) store.sync(); });
 })();

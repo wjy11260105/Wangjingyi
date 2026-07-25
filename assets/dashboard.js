@@ -8,7 +8,6 @@
   const getHabits = () => Store.get("life-habits-v1", []);
   const getBooks = () => Store.get("life-books-v1", []);
   const getTrips = () => Store.get("life-trips-v1", []);
-  const getDraws = () => Store.get("life-tarot-v1", []);
 
   /* 每日活跃度 = 训练次数 + 习惯打卡数 + 已完成日程数 */
   function activityMap() {
@@ -50,7 +49,12 @@
     const habits = getHabits();
     const books = getBooks();
     const trips = getTrips();
-    const draws = getDraws();
+    const todayBazi = Lunar.bazi(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      now.getDate(),
+      now.getHours()
+    );
 
     /* 本周训练时长 */
     const weekStart = toDateKey(startOfWeek(now));
@@ -71,8 +75,6 @@
 
     const reading = books.filter(book => book.status === "reading");
     const wishTrips = trips.filter(trip => trip.status === "wish");
-    const daily = draws.find(entry => entry.spread === "daily" && entry.date === todayKey);
-    const dailyCard = daily ? TAROT[daily.cards[0].index] : null;
 
     root.innerHTML = `
       <header class="topbar">
@@ -138,19 +140,21 @@
         </div>
         <div>
           <section class="panel">
-            <div class="panel-head"><h3>今日一牌</h3><button class="ghost-btn small" data-go="mystic">玄学空间</button></div>
-            ${dailyCard
-              ? `<div class="today-tarot">
-                   <span class="tt-icon">${dailyCard.icon}</span>
-                   <div>
-                     <h4>${dailyCard.name} · ${daily.cards[0].reversed ? "逆位" : "正位"}</h4>
-                     <p>${daily.cards[0].reversed ? dailyCard.rev : dailyCard.up}</p>
-                   </div>
-                 </div>`
-              : `<div class="today-tarot">
-                   <span class="tt-icon">🌙</span>
-                   <div><h4>今天还没抽牌</h4><p>去玄学空间抽一张今日指引</p></div>
-                 </div>`}
+            <div class="panel-head"><h3>今天的八字信息</h3><button class="ghost-btn small" data-go="mystic">查看命盘</button></div>
+            <div class="today-bazi">
+              <div class="today-bazi-grid">
+                ${todayBazi.pillars.map(pillar => `
+                  <div class="today-bazi-pillar">
+                    <small>${pillar.name}</small>
+                    <b>${pillar.gan}${pillar.zhi}</b>
+                  </div>`).join("")}
+              </div>
+              <p class="today-bazi-note">
+                今日为 <b>${todayBazi.pillars[2].gan}${todayBazi.pillars[2].zhi}</b> 日，
+                日主五行属 <b>${todayBazi.dayMasterElement}</b>；
+                当前是 <b>${todayBazi.pillars[3].gan}${todayBazi.pillars[3].zhi}</b> 时。
+              </p>
+            </div>
           </section>
           <section class="panel">
             <div class="panel-head"><h3>生活切片</h3></div>

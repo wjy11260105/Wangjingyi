@@ -167,8 +167,6 @@ svg { display: block; }
 .sync-dot.busy { background: #d9a13f; animation: syncPulse 1s infinite; }
 .sync-dot.error { background: #c65d56; }
 @keyframes syncPulse { 50% { opacity: .35; } }
-.data-actions { display: flex; gap: 8px; margin-top: 16px; }
-.data-actions .ghost-btn { flex: 1; }
 .quote {
   margin-top: auto;
   padding: 22px 16px 4px;
@@ -779,18 +777,43 @@ h2.block-title {
 .overview-item .oi-main { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .overview-item .oi-sub { color: #9aa19b; font-size: 10px; }
 .dash-cols { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; align-items: start; }
-.today-tarot {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
+.today-bazi {
+  padding: 15px;
   border-radius: 15px;
   color: #f4ecd7;
   background: linear-gradient(140deg, #1f3630, #2d4a41);
 }
-.today-tarot .tt-icon { font-size: 30px; }
-.today-tarot h4 { margin: 0 0 4px; font-family: Georgia, "Songti SC", serif; font-weight: 500; font-size: 15px; }
-.today-tarot p { margin: 0; font-size: 11px; opacity: .75; line-height: 1.55; }
+.today-bazi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+.today-bazi-pillar {
+  padding: 9px 5px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  text-align: center;
+}
+.today-bazi-pillar small {
+  display: block;
+  color: rgba(255,255,255,.55);
+  font-size: 9px;
+}
+.today-bazi-pillar b {
+  display: block;
+  margin-top: 4px;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+.today-bazi-note {
+  margin: 10px 2px 0;
+  color: rgba(255,255,255,.68);
+  font-size: 10px;
+  line-height: 1.55;
+}
 
 /* ---------- 弹窗与提示 ---------- */
 .modal-backdrop {

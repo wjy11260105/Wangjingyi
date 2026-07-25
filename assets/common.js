@@ -42,18 +42,6 @@
     }
   };
 
-  /* 全量备份包含的 localStorage key */
-  const DATA_KEYS = [
-    "my-schedule-events-v1",
-    "life-goals-v1",
-    "life-workouts-v1",
-    "life-habits-v1",
-    "life-books-v1",
-    "life-trips-v1",
-    "life-tarot-v1",
-    "life-birth-v1"
-  ];
-
   let toastTimer;
   function toast(message) {
     const node = document.getElementById("toast");
@@ -150,39 +138,6 @@
         .map(name => `<button data-nav="${name}">${labels[name] || name}</button>`)
         .join("");
     },
-    exportData() {
-      const payload = { app: "life-manager", version: 1, exportedAt: new Date().toISOString(), data: {} };
-      DATA_KEYS.forEach(key => {
-        const value = Store.get(key, null);
-        if (value !== null) payload.data[key] = value;
-      });
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `人生管理备份-${toDateKey(new Date())}.json`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-      toast("已导出全部数据");
-    },
-    importData(file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const payload = JSON.parse(reader.result);
-          const data = payload && payload.data;
-          if (!data || typeof data !== "object") throw new Error("bad file");
-          if (!confirm("导入将覆盖当前浏览器中的对应数据，确定继续吗？")) return;
-          Object.keys(data).forEach(key => {
-            if (DATA_KEYS.includes(key)) Store.set(key, data[key]);
-          });
-          toast("数据导入成功");
-          App.refresh();
-        } catch {
-          toast("文件格式不正确，导入失败");
-        }
-      };
-      reader.readAsText(file);
-    },
     init() {
       App.renderMiniCalendar();
       App.renderMobileTabs();
@@ -209,13 +164,6 @@
       document.getElementById("closeModal").addEventListener("click", Modal.close);
       modal.addEventListener("click", event => { if (event.target === modal) Modal.close(); });
       document.addEventListener("keydown", event => { if (event.key === "Escape") Modal.close(); });
-
-      document.getElementById("exportBtn").addEventListener("click", App.exportData);
-      document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
-      document.getElementById("importFile").addEventListener("change", event => {
-        if (event.target.files[0]) App.importData(event.target.files[0]);
-        event.target.value = "";
-      });
 
       const route = () => {
         const name = (location.hash.replace(/^#\//, "") || "dashboard").split("?")[0];

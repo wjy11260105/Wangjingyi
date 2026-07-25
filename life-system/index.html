@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f3f1ec">
+  <title>人生观测站 · Life OS</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#/dashboard" aria-label="人生观测站首页">
+        <span class="brand-mark">L</span>
+        <span>人生观测站<small>PERSONAL LIFE OS</small></span>
+      </a>
+
+      <nav class="nav" id="mainNav" aria-label="主导航">
+        <a href="#/dashboard" data-route="dashboard">
+          <span class="nav-icon">⌂</span><span>人生总览</span>
+        </a>
+        <a href="#/schedule" data-route="schedule">
+          <span class="nav-icon">□</span><span>日程安排</span>
+        </a>
+        <a href="#/goals" data-route="goals">
+          <span class="nav-icon">◎</span><span>目标与项目</span>
+        </a>
+        <a href="#/habits" data-route="habits">
+          <span class="nav-icon">✓</span><span>习惯追踪</span>
+        </a>
+        <a href="#/reviews" data-route="reviews">
+          <span class="nav-icon">↻</span><span>周期复盘</span>
+        </a>
+        <a href="#/tracking" data-route="tracking">
+          <span class="nav-icon">△</span><span>成长记录</span>
+        </a>
+        <a href="#/reflections" data-route="reflections">
+          <span class="nav-icon">✦</span><span>内在感悟</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-areas">
+        <div class="section-kicker">人生领域</div>
+        <div id="sidebarAreas"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="account-button" id="accountButton">
+          <span class="avatar" id="avatar">我</span>
+          <span><strong id="accountName">本地模式</strong><small id="syncState">数据保存在此设备</small></span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="date-line" id="dateLine"></p>
+          <h1 id="pageTitle">人生总览</h1>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button" id="syncButton" title="同步数据" aria-label="同步数据">↻</button>
+          <button class="primary-button" id="quickAddButton"><span>＋</span> 快速记录</button>
+        </div>
+      </header>
+      <div id="view" class="view" aria-live="polite"></div>
+    </main>
+
+    <aside class="insight-panel">
+      <section class="today-card">
+        <p class="section-kicker">今日坐标</p>
+        <div class="today-date"><strong id="todayNumber"></strong><span id="todayMonth"></span></div>
+        <p id="todayQuote">先照顾好今天，人生会自己生长。</p>
+      </section>
+      <section>
+        <div class="panel-title"><h3>今天的行动</h3><span id="todayActionCount">0 项</span></div>
+        <div id="todayActions" class="side-list"></div>
+      </section>
+      <section>
+        <div class="panel-title"><h3>近期目标</h3><a href="#/goals">查看全部</a></div>
+        <div id="sideGoals" class="side-list"></div>
+      </section>
+    </aside>
+  </div>
+
+  <nav class="mobile-nav" aria-label="移动端导航">
+    <a href="#/dashboard" data-route="dashboard"><span>⌂</span>总览</a>
+    <a href="#/schedule" data-route="schedule"><span>□</span>日程</a>
+    <button id="mobileAdd" aria-label="快速记录">＋</button>
+    <a href="#/habits" data-route="habits"><span>✓</span>习惯</a>
+    <a href="#/goals" data-route="goals"><span>◎</span>目标</a>
+  </nav>
+
+  <div class="modal-backdrop" id="entityModal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <div><p class="section-kicker" id="modalKicker">新增记录</p><h2 id="modalTitle">快速记录</h2></div>
+        <button class="icon-button" data-close-modal aria-label="关闭">×</button>
+      </div>
+      <form id="entityForm">
+        <input type="hidden" id="entityType">
+        <input type="hidden" id="entityId">
+        <div id="formFields" class="form-grid"></div>
+        <div class="modal-actions">
+          <button type="button" class="danger-button hidden" id="deleteEntity">删除</button>
+          <div class="modal-actions-right">
+            <button type="button" class="secondary-button" data-close-modal>取消</button>
+            <button type="submit" class="primary-button">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="quickModal" role="dialog" aria-modal="true">
+    <div class="modal compact-modal">
+      <div class="modal-head">
+        <div><p class="section-kicker">CAPTURE</p><h2>此刻想记录什么？</h2></div>
+        <button class="icon-button" data-close-quick aria-label="关闭">×</button>
+      </div>
+      <div class="quick-grid">
+        <button data-quick="event"><span>□</span><strong>日程</strong><small>安排一段时间</small></button>
+        <button data-quick="goal"><span>◎</span><strong>目标</strong><small>确定前进方向</small></button>
+        <button data-quick="sport"><span>△</span><strong>运动</strong><small>记录一次训练</small></button>
+        <button data-quick="reading"><span>▤</span><strong>阅读</strong><small>留下一次输入</small></button>
+        <button data-quick="review"><span>↻</span><strong>复盘</strong><small>看见行动反馈</small></button>
+        <button data-quick="reflection"><span>✦</span><strong>感悟</strong><small>保存内在声音</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true">
+    <div class="modal compact-modal">
+      <div class="modal-head">
+        <div><p class="section-kicker">CLOUD SYNC</p><h2>登录人生观测站</h2></div>
+        <button class="icon-button" data-close-auth aria-label="关闭">×</button>
+      </div>
+      <p class="muted-copy">使用同一账号登录手机和电脑，所有人生记录会保持一致。</p>
+      <form id="authForm" class="form-grid">
+        <label class="field full"><span>邮箱</span><input id="authEmail" type="email" required autocomplete="email"></label>
+        <label class="field full"><span>密码</span><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></label>
+        <div class="auth-actions full">
+          <button type="button" class="secondary-button" id="signUpButton">注册</button>
+          <button type="submit" class="primary-button">登录并同步</button>
+        </div>
+      </form>
+      <div id="signedInPanel" class="signed-in-panel hidden">
+        <p>已登录：<strong id="signedInEmail"></strong></p>
+        <div class="auth-actions">
+          <button class="secondary-button" id="manualSyncButton">立即同步</button>
+          <button class="danger-button" id="signOutButton">退出登录</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/store.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

@@ -123,9 +123,12 @@
       for (let i = 0; i < 35; i++) {
         const date = addDays(start, i);
         const dateKey = toDateKey(date);
+        const isFlowMonthStart = window.Lunar
+          && date.getDate() === Lunar.jieDay(date.getFullYear(), date.getMonth() + 1);
         const classes = [
           date.getMonth() !== cursor.getMonth() ? "muted-day" : "",
-          dateKey === toDateKey(now) ? "today" : ""
+          dateKey === toDateKey(now) ? "today" : "",
+          isFlowMonthStart ? "flow-month-start" : ""
         ].filter(Boolean).join(" ");
         labels.push(`<button type="button" class="${classes}" data-flow-date="${dateKey}">${date.getDate()}</button>`);
       }

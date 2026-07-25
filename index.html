@@ -1135,7 +1135,10 @@
         el("signUpBtn").disabled = true;
         const { data, error } = await cloud.auth.signUp({
           email: el("authEmail").value.trim(),
-          password: el("authPassword").value
+          password: el("authPassword").value,
+          options: {
+            emailRedirectTo: window.location.href.split("#")[0].split("?")[0]
+          }
         });
         el("signUpBtn").disabled = false;
         if (error) {

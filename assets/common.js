@@ -118,13 +118,38 @@
       const labels = ["一", "二", "三", "四", "五", "六", "日"].map(d => `<span class="dow">${d}</span>`);
       for (let i = 0; i < 35; i++) {
         const date = addDays(start, i);
+        const dateKey = toDateKey(date);
         const classes = [
           date.getMonth() !== now.getMonth() ? "muted-day" : "",
-          toDateKey(date) === toDateKey(now) ? "today" : ""
+          dateKey === toDateKey(now) ? "today" : ""
         ].filter(Boolean).join(" ");
-        labels.push(`<span class="${classes}">${date.getDate()}</span>`);
+        labels.push(`<button type="button" class="${classes}" data-flow-date="${dateKey}">${date.getDate()}</button>`);
       }
       document.getElementById("miniGrid").innerHTML = labels.join("");
+
+      const tooltip = document.getElementById("flowMonthTooltip");
+      const showFlowMonth = button => {
+        if (!window.Lunar || !tooltip) return;
+        const date = parseDate(button.dataset.flowDate);
+        const chart = Lunar.bazi(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12);
+        tooltip.textContent = `${chart.pillars[0].gan}${chart.pillars[0].zhi}年 · ${chart.pillars[1].gan}${chart.pillars[1].zhi}月`;
+        const rect = button.getBoundingClientRect();
+        tooltip.style.left = `${Math.min(window.innerWidth - tooltip.offsetWidth - 10, Math.max(10, rect.left + rect.width / 2 - tooltip.offsetWidth / 2))}px`;
+        tooltip.style.top = `${rect.top - tooltip.offsetHeight - 8}px`;
+        tooltip.classList.add("show");
+      };
+      const hideFlowMonth = () => tooltip?.classList.remove("show");
+      document.querySelectorAll("[data-flow-date]").forEach(button => {
+        button.addEventListener("mouseenter", () => showFlowMonth(button));
+        button.addEventListener("mouseleave", hideFlowMonth);
+        button.addEventListener("focus", () => showFlowMonth(button));
+        button.addEventListener("blur", hideFlowMonth);
+        button.addEventListener("click", () => {
+          showFlowMonth(button);
+          clearTimeout(App.flowTooltipTimer);
+          App.flowTooltipTimer = setTimeout(hideFlowMonth, 2200);
+        });
+      });
     },
     renderMobileTabs() {
       const labels = {

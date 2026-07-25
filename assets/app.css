@@ -125,13 +125,19 @@ svg { display: block; }
   text-align: center;
   font-size: 11px;
 }
-.mini-grid span {
+.mini-grid span, .mini-grid button {
   display: grid;
   place-items: center;
   aspect-ratio: 1;
+  padding: 0;
+  border: 0;
   border-radius: 7px;
   color: #707a73;
+  background: transparent;
+  font-size: inherit;
 }
+.mini-grid button { cursor: pointer; }
+.mini-grid button:hover, .mini-grid button:focus-visible { background: #eef2ed; outline: none; }
 .mini-grid .dow { color: #abb0ac; font-weight: 700; }
 .mini-grid .muted-day { color: #cdd0cd; }
 .mini-grid .today { color: #fff; background: var(--green); font-weight: 800; }
@@ -881,6 +887,28 @@ h2.block-title {
   transition: .25s;
 }
 .toast.show { transform: none; opacity: 1; }
+.flow-month-tooltip {
+  position: fixed;
+  z-index: 35;
+  padding: 8px 11px;
+  border-radius: 9px;
+  color: #fff;
+  background: #1f362b;
+  box-shadow: 0 8px 20px rgba(30,46,38,.18);
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: .15s;
+}
+.flow-month-tooltip.show {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
 
 /* ---------- 云同步 ---------- */
 .sync-intro {

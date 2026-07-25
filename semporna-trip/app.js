@@ -178,6 +178,7 @@
       this.emit("synced");
     }
     async signIn(email, password) {
+      if (!this.cloud) return { error: new Error("云同步组件加载失败，请刷新页面或更换网络后重试") };
       const result = await this.cloud.auth.signInWithPassword({ email, password });
       if (!result.error) {
         this.user = result.data.user;
@@ -187,6 +188,7 @@
       return result;
     }
     signUp(email, password) {
+      if (!this.cloud) return Promise.resolve({ error: new Error("云同步组件加载失败，请刷新页面或更换网络后重试") });
       return this.cloud.auth.signUp({
         email, password,
         options: { emailRedirectTo: window.location.href.split("#")[0] }
@@ -483,10 +485,11 @@
     $("#signedEmail").textContent = store.user?.email || "";
     $("#authForm").classList.toggle("hidden", signed);
     $("#signedPanel").classList.toggle("hidden", !signed);
-    const labels = { syncing:"正在同步…", synced:"云端已同步", "sync-error":"同步失败，已保留本地", "schema-missing":"需要初始化旅行数据表" };
+    const labels = { syncing:"正在同步…", synced:"云端已同步", "sync-error":"同步失败，已保留本地", "schema-missing":"需要初始化旅行数据表", "cloud-error":"云同步组件加载失败" };
     $("#syncLabel").textContent = labels[type] || (signed ? "云端已连接" : "数据保存在此设备");
     if (type === "schema-missing") toast("请先在 Supabase 执行仙本那旅行数据表 SQL");
     if (type === "sync-error") toast("云端同步失败，本地记录不会丢失");
+    if (type === "cloud-error") toast("云同步组件加载失败，请刷新页面或更换网络");
   }
 
   function bind() {

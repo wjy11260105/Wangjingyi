@@ -293,8 +293,16 @@
 
       if (this.state.meta.freshSample && hasRemoteData) {
         Object.entries(remoteByKey).forEach(([key, rows]) => {
-          this.state[key] = rows.map(({ user_id, ...row }) => row);
+          if (rows.length) this.state[key] = rows.map(({ user_id, ...row }) => row);
         });
+        for (const key of TABLE_KEYS) {
+          if (!remoteByKey[key] || remoteByKey[key].length) continue;
+          const rows = this.list(key, { includeDeleted: true }).map(row => ({ ...row, user_id: this.user.id }));
+          if (rows.length) {
+            const { error } = await this.cloud.from(config.tables[key]).upsert(rows);
+            if (error) errors.push({ key, error });
+          }
+        }
       } else {
         for (const key of TABLE_KEYS) {
           if (!remoteByKey[key]) continue;

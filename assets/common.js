@@ -111,8 +111,12 @@
     },
     renderMiniCalendar() {
       const now = new Date();
-      document.getElementById("miniMonth").textContent = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
-      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      if (!App.miniCalendarCursor) {
+        App.miniCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+      const cursor = App.miniCalendarCursor;
+      document.getElementById("miniMonth").textContent = `${cursor.getFullYear()}年 ${cursor.getMonth() + 1}月`;
+      const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
       const offset = (first.getDay() + 6) % 7;
       const start = addDays(first, -offset);
       const labels = ["一", "二", "三", "四", "五", "六", "日"].map(d => `<span class="dow">${d}</span>`);
@@ -120,7 +124,7 @@
         const date = addDays(start, i);
         const dateKey = toDateKey(date);
         const classes = [
-          date.getMonth() !== now.getMonth() ? "muted-day" : "",
+          date.getMonth() !== cursor.getMonth() ? "muted-day" : "",
           dateKey === toDateKey(now) ? "today" : ""
         ].filter(Boolean).join(" ");
         labels.push(`<button type="button" class="${classes}" data-flow-date="${dateKey}">${date.getDate()}</button>`);
@@ -150,6 +154,19 @@
           App.flowTooltipTimer = setTimeout(hideFlowMonth, 2200);
         });
       });
+
+      document.getElementById("miniPrevMonth").onclick = () => {
+        App.miniCalendarCursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1);
+        App.renderMiniCalendar();
+      };
+      document.getElementById("miniNextMonth").onclick = () => {
+        App.miniCalendarCursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+        App.renderMiniCalendar();
+      };
+      document.getElementById("miniTodayMonth").onclick = () => {
+        App.miniCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+        App.renderMiniCalendar();
+      };
     },
     renderMobileTabs() {
       const labels = {

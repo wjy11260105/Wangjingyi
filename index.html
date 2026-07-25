@@ -58,7 +58,14 @@
         </button>
       </nav>
       <div class="mini-calendar">
-        <div class="mini-head"><span id="miniMonth"></span><span>今天</span></div>
+        <div class="mini-head">
+          <span id="miniMonth"></span>
+          <div class="mini-month-actions">
+            <button type="button" id="miniPrevMonth" aria-label="上一个月">‹</button>
+            <button type="button" class="mini-today-btn" id="miniTodayMonth">今天</button>
+            <button type="button" id="miniNextMonth" aria-label="下一个月">›</button>
+          </div>
+        </div>
         <div class="mini-grid" id="miniGrid"></div>
       </div>
       <button class="sync-button" data-sync-button type="button">

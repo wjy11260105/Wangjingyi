@@ -118,6 +118,23 @@ svg { display: block; }
   font-size: 13px;
   font-weight: 750;
 }
+.mini-month-actions { display: flex; align-items: center; gap: 3px; }
+.mini-month-actions button {
+  display: grid;
+  place-items: center;
+  min-width: 23px;
+  height: 23px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 7px;
+  color: #7b857e;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  transition: .15s;
+}
+.mini-month-actions button:hover { color: var(--green); background: var(--green-light); }
+.mini-month-actions .mini-today-btn { font-size: 10px; font-weight: 700; }
 .mini-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

@@ -211,6 +211,9 @@
       font-weight: 750;
     }
     .primary-btn:hover { transform: translateY(-1px); background: #193c2d; }
+    .sync-btn.synced { color: var(--green); border-color: #b9d1c3; background: #eef6f1; }
+    .sync-btn.syncing svg { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .stats {
       display: grid;
@@ -335,6 +338,18 @@
       background: #fafaf7;
     }
     .profile { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 42px; }
+    .profile-auth {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+    }
+    .profile-auth:hover { background: #eff1ed; }
     .avatar {
       display: grid;
       place-items: center;
@@ -431,6 +446,10 @@
     .field input, .field select { height: 42px; padding: 0 12px; }
     .field textarea { min-height: 76px; padding: 11px 12px; resize: vertical; }
     .field input:focus, .field select:focus, .field textarea:focus { border-color: #739181; box-shadow: 0 0 0 3px #edf3ef; background: #fff; }
+    .auth-note { margin: -8px 0 18px; color: #7d867f; font-size: 12px; line-height: 1.65; }
+    .auth-user { display: none; padding: 14px; border-radius: 12px; background: #f2f5f2; font-size: 12px; line-height: 1.6; }
+    .auth-user.show { display: block; }
+    .auth-form.hidden { display: none; }
     .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
     .delete-btn { display: none; color: #b44c42; border-color: #efd5d2; }
     .delete-btn.show { display: inline-flex; }
@@ -486,7 +505,9 @@
     }
     @media (max-width: 560px) {
       .topbar { align-items: flex-start; }
-      .top-actions .icon-btn, .top-actions .ghost-btn { display: none; }
+      .top-actions .icon-btn, .top-actions .ghost-btn:not(.sync-btn) { display: none; }
+      .sync-btn { width: 42px; padding: 0; }
+      .sync-btn span { display: none; }
       .primary-btn span { display: none; }
       .stats { gap: 9px; }
       .stat { min-height: 100px; padding: 16px; }
@@ -543,6 +564,10 @@
           <button class="icon-btn" id="todayBtn" title="回到今天" aria-label="回到今天">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </button>
+          <button class="ghost-btn sync-btn" id="syncBtn" title="登录并同步" aria-label="登录并同步">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 18h10a4 4 0 0 0 .8-7.92A6 6 0 0 0 6.2 8.5 4.8 4.8 0 0 0 7 18Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 13 3-3 3 3M12 10v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="syncLabel">登录同步</span>
+          </button>
           <button class="primary-btn" id="addBtn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span>添加日程</span>
@@ -597,8 +622,10 @@
 
     <aside class="rightbar">
       <div class="profile">
-        <div class="avatar">我</div>
-        <div class="profile-text">我的日程<span id="profileDate"></span></div>
+        <button class="profile-auth" id="profileAuth">
+          <div class="avatar">我</div>
+          <div class="profile-text" id="profileName">我的日程<span id="profileDate"></span></div>
+        </button>
       </div>
       <div class="side-title">
         <h3>接下来</h3>
@@ -678,11 +705,52 @@
       </form>
     </div>
   </div>
+
+  <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="authTitle">登录并同步</h3>
+        <button class="icon-btn" id="closeAuth" aria-label="关闭">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="auth-note">使用同一邮箱登录手机和电脑，日程就会自动保存到云端并保持一致。</p>
+      <form id="authForm" class="auth-form">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="authEmail">邮箱</label>
+            <input id="authEmail" type="email" required autocomplete="email" placeholder="name@example.com">
+          </div>
+          <div class="field full">
+            <label for="authPassword">密码（至少 6 位）</label>
+            <input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="请输入密码">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" id="signUpBtn">注册</button>
+          <div class="right-actions">
+            <button type="submit" class="primary-btn" id="signInBtn">登录并同步</button>
+          </div>
+        </div>
+      </form>
+      <div class="auth-user" id="authUser">
+        <strong id="userEmail"></strong><br>
+        已连接云端，当前设备上的修改会自动同步。
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" id="manualSyncBtn">立即同步</button>
+          <button type="button" class="ghost-btn" id="signOutBtn">退出登录</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="toast" id="toast" role="status"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (() => {
       const STORAGE_KEY = "my-schedule-events-v1";
+      const SUPABASE_URL = "https://ioovufcayedkuntyfija.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_gExNFObPWnyM0rk9-kyA0w_4UXgnjl0";
       const typeNames = { competition: "比赛", sport: "运动", work: "工作", study: "学习", life: "生活" };
       const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
       const pad = n => String(n).padStart(2, "0");
@@ -726,12 +794,131 @@
       } catch { events = makeSamples(); }
       let currentWeek = startOfWeek(new Date());
       let activeFilter = "all";
+      let currentUser = null;
+      const cloud = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const el = id => document.getElementById(id);
       const modal = el("modal");
+      const authModal = el("authModal");
 
       function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      }
+
+      function toCloudEvent(event) {
+        return {
+          id: event.id,
+          user_id: currentUser.id,
+          title: event.title,
+          type: event.type,
+          event_date: event.date,
+          start_time: event.start,
+          end_time: event.end,
+          location: event.location || "",
+          note: event.note || "",
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      function fromCloudEvent(event) {
+        return {
+          id: event.id,
+          title: event.title,
+          type: event.type,
+          date: event.event_date,
+          start: String(event.start_time).slice(0, 5),
+          end: String(event.end_time).slice(0, 5),
+          location: event.location || "",
+          note: event.note || ""
+        };
+      }
+
+      function setSyncState(state, label) {
+        el("syncBtn").classList.toggle("synced", state === "synced");
+        el("syncBtn").classList.toggle("syncing", state === "syncing");
+        el("syncLabel").textContent = label;
+        el("syncBtn").title = label;
+      }
+
+      async function upsertCloudEvent(event) {
+        if (!currentUser) return;
+        setSyncState("syncing", "同步中");
+        const { error } = await cloud.from("schedule_events").upsert(toCloudEvent(event));
+        if (error) {
+          setSyncState("error", "同步失败");
+          toast(error.code === "PGRST205" ? "请先在 Supabase 执行初始化 SQL" : `云端同步失败：${error.message}`);
+          return;
+        }
+        setSyncState("synced", "已同步");
+      }
+
+      async function deleteCloudEvent(id) {
+        if (!currentUser) return;
+        setSyncState("syncing", "同步中");
+        const { error } = await cloud.from("schedule_events").delete().eq("id", id);
+        if (error) {
+          setSyncState("error", "同步失败");
+          toast(`云端删除失败：${error.message}`);
+          return;
+        }
+        setSyncState("synced", "已同步");
+      }
+
+      async function syncFromCloud(showMessage = false) {
+        if (!currentUser) return;
+        setSyncState("syncing", "同步中");
+        const { data, error } = await cloud
+          .from("schedule_events")
+          .select("*")
+          .order("event_date", { ascending: true })
+          .order("start_time", { ascending: true });
+        if (error) {
+          setSyncState("error", "同步失败");
+          toast(error.code === "PGRST205" ? "请先在 Supabase 执行初始化 SQL" : `云端同步失败：${error.message}`);
+          return;
+        }
+
+        if (data.length === 0 && events.length > 0) {
+          const { error: uploadError } = await cloud.from("schedule_events").upsert(events.map(toCloudEvent));
+          if (uploadError) {
+            setSyncState("error", "同步失败");
+            toast(`首次上传失败：${uploadError.message}`);
+            return;
+          }
+        } else {
+          events = data.map(fromCloudEvent);
+          save();
+          renderAll();
+        }
+        setSyncState("synced", "已同步");
+        if (showMessage) toast("手机与电脑日程已同步");
+      }
+
+      function updateAuthUI() {
+        const signedIn = Boolean(currentUser);
+        el("authForm").classList.toggle("hidden", signedIn);
+        el("authUser").classList.toggle("show", signedIn);
+        el("userEmail").textContent = currentUser?.email || "";
+        el("profileName").firstChild.textContent = signedIn ? "云端日程" : "我的日程";
+        setSyncState(signedIn ? "synced" : "offline", signedIn ? "已同步" : "登录同步");
+      }
+
+      async function initializeCloud() {
+        if (!cloud) {
+          setSyncState("error", "云服务未加载");
+          return;
+        }
+        const { data: { session } } = await cloud.auth.getSession();
+        currentUser = session?.user || null;
+        updateAuthUI();
+        if (currentUser) await syncFromCloud();
+        cloud.auth.onAuthStateChange(async (_event, nextSession) => {
+          const nextUser = nextSession?.user || null;
+          if (nextUser?.id === currentUser?.id) return;
+          currentUser = nextUser;
+          updateAuthUI();
+          if (currentUser) await syncFromCloud();
+        });
       }
 
       function renderMiniCalendar() {
@@ -876,7 +1063,7 @@
         toastTimer = setTimeout(() => el("toast").classList.remove("show"), 2200);
       }
 
-      el("eventForm").addEventListener("submit", event => {
+      el("eventForm").addEventListener("submit", async event => {
         event.preventDefault();
         const start = el("startTime").value;
         const end = el("endTime").value;
@@ -901,25 +1088,95 @@
         closeModal();
         currentWeek = startOfWeek(parseDate(data.date));
         renderAll();
+        await upsertCloudEvent(data);
         toast(index >= 0 ? "日程已更新" : "日程已添加");
       });
 
-      el("deleteBtn").addEventListener("click", () => {
+      el("deleteBtn").addEventListener("click", async () => {
         const id = el("eventId").value;
         if (!id || !confirm("确定删除这项日程吗？")) return;
         events = events.filter(event => event.id !== id);
         save();
         closeModal();
         renderAll();
+        await deleteCloudEvent(id);
         toast("日程已删除");
       });
+
+      function openAuth() {
+        authModal.classList.add("open");
+        if (!currentUser) setTimeout(() => el("authEmail").focus(), 100);
+      }
+
+      function closeAuth() {
+        authModal.classList.remove("open");
+      }
+
+      el("authForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        el("signInBtn").disabled = true;
+        const { data, error } = await cloud.auth.signInWithPassword({
+          email: el("authEmail").value.trim(),
+          password: el("authPassword").value
+        });
+        el("signInBtn").disabled = false;
+        if (error) {
+          toast(`登录失败：${error.message}`);
+          return;
+        }
+        currentUser = data.user;
+        updateAuthUI();
+        await syncFromCloud(true);
+        closeAuth();
+      });
+
+      el("signUpBtn").addEventListener("click", async () => {
+        if (!el("authForm").reportValidity()) return;
+        el("signUpBtn").disabled = true;
+        const { data, error } = await cloud.auth.signUp({
+          email: el("authEmail").value.trim(),
+          password: el("authPassword").value
+        });
+        el("signUpBtn").disabled = false;
+        if (error) {
+          toast(`注册失败：${error.message}`);
+          return;
+        }
+        if (data.session) {
+          currentUser = data.user;
+          updateAuthUI();
+          await syncFromCloud(true);
+          closeAuth();
+        } else {
+          toast("注册成功，请前往邮箱完成验证");
+        }
+      });
+
+      el("signOutBtn").addEventListener("click", async () => {
+        await cloud.auth.signOut();
+        currentUser = null;
+        updateAuthUI();
+        closeAuth();
+        toast("已退出云端账号，本机日程仍保留");
+      });
+
+      el("manualSyncBtn").addEventListener("click", () => syncFromCloud(true));
+      el("syncBtn").addEventListener("click", () => currentUser ? syncFromCloud(true) : openAuth());
+      el("profileAuth").addEventListener("click", openAuth);
+      el("closeAuth").addEventListener("click", closeAuth);
+      authModal.addEventListener("click", event => { if (event.target === authModal) closeAuth(); });
 
       el("addBtn").addEventListener("click", () => openModal());
       el("mobileAdd").addEventListener("click", () => openModal());
       el("closeModal").addEventListener("click", closeModal);
       el("cancelBtn").addEventListener("click", closeModal);
       modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
-      document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          closeModal();
+          closeAuth();
+        }
+      });
       el("prevWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, -7); renderWeek(); });
       el("nextWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, 7); renderWeek(); });
       el("todayBtn").addEventListener("click", () => { currentWeek = startOfWeek(new Date()); renderWeek(); });
@@ -930,6 +1187,8 @@
       renderMiniCalendar();
       renderAll();
       if (!localStorage.getItem(STORAGE_KEY)) save();
+      initializeCloud();
+      window.addEventListener("focus", () => { if (currentUser) syncFromCloud(); });
     })();
   </script>
 </body>

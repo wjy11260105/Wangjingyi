@@ -116,6 +116,11 @@
       }
       const cursor = App.miniCalendarCursor;
       document.getElementById("miniMonth").textContent = `${cursor.getFullYear()}年 ${cursor.getMonth() + 1}月`;
+      if (window.Lunar) {
+        const middle = Lunar.bazi(cursor.getFullYear(), cursor.getMonth() + 1, 15, 12);
+        document.getElementById("miniFlowMonthName").textContent =
+          `${middle.pillars[1].gan}${middle.pillars[1].zhi}月`;
+      }
       const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
       const offset = (first.getDay() + 6) % 7;
       const start = addDays(first, -offset);

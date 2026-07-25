@@ -176,12 +176,16 @@ svg { display: block; }
 .mini-grid .muted-day { color: #cdd0cd; }
 .mini-grid .today { color: #fff; background: var(--green); font-weight: 800; }
 .mini-grid button.today.flow-month-start { color: #fff; background: var(--green); box-shadow: inset 0 0 0 2px #efae85; }
+.mini-flow-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 9px;
+}
 .mini-flow-legend {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 5px;
-  margin-top: 9px;
   color: #a2a8a3;
   font-size: 9px;
 }
@@ -190,6 +194,12 @@ svg { display: block; }
   height: 6px;
   border-radius: 50%;
   background: var(--orange);
+}
+.mini-flow-footer strong {
+  color: var(--green);
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .sync-button {

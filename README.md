@@ -31,3 +31,7 @@
 全新的人生管理系统位于 [`life-system/`](life-system/)，与当前日程网页独立，不会覆盖现有入口。
 
 新版增加人生总览、目标项目、习惯、复盘、运动/阅读/旅行记录，以及塔罗、紫微、八字的手动感悟记录。使用云端功能前，需要在 Supabase SQL Editor 中执行 [`supabase-life-system.sql`](supabase-life-system.sql)。
+
+## 仙本那旅行手账
+
+2026年8月14–22日仙本那旅行管理网页位于 [`semporna-trip/`](semporna-trip/)，支持九天行程、想做事项、每日学习与感悟、预算及行前清单。使用云端同步前，需要执行 [`supabase-semporna-trip.sql`](supabase-semporna-trip.sql)。

@@ -120,10 +120,42 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 15px;
+      gap: 4px;
+      margin-bottom: 10px;
       font-size: 13px;
       font-weight: 750;
     }
+    .mini-nav, .mini-title {
+      display: grid;
+      place-items: center;
+      height: 27px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .mini-nav { width: 27px; color: #8d958f; font-size: 17px; }
+    .mini-title { flex: 1; padding: 0 4px; color: var(--ink); font-weight: 750; }
+    .mini-nav:hover, .mini-title:hover { background: #f0f3ef; }
+    .mini-modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      margin-bottom: 11px;
+      padding: 3px;
+      border-radius: 8px;
+      background: #f1f2ef;
+    }
+    .mini-mode {
+      padding: 4px;
+      border: 0;
+      border-radius: 6px;
+      color: #929992;
+      background: transparent;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    .mini-mode.active { color: var(--green); background: #fff; box-shadow: 0 1px 5px rgba(0,0,0,.06); font-weight: 750; }
     .mini-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -131,16 +163,39 @@
       text-align: center;
       font-size: 11px;
     }
-    .mini-grid span {
+    .mini-grid > * {
       display: grid;
       place-items: center;
       aspect-ratio: 1;
+      border: 0;
       border-radius: 7px;
       color: #707a73;
+      background: transparent;
     }
     .mini-grid .dow { color: #abb0ac; font-weight: 700; }
     .mini-grid .muted-day { color: #cdd0cd; }
     .mini-grid .today { color: #fff; background: var(--green); font-weight: 800; }
+    .mini-grid .selected { color: var(--green); box-shadow: inset 0 0 0 1px var(--green); font-weight: 750; }
+    .mini-grid .today.selected { color: #fff; box-shadow: inset 0 0 0 1px #fff; }
+    .mini-day { cursor: pointer; }
+    .mini-day:hover { background: #edf3ef; }
+    .mini-grid .today:hover { background: var(--green); }
+    .mini-year-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      min-height: 126px;
+    }
+    .mini-year-grid button {
+      padding: 9px 3px;
+      border: 0;
+      border-radius: 8px;
+      color: #69736c;
+      background: #f7f8f5;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .mini-year-grid button:hover, .mini-year-grid button.current { color: #fff; background: var(--green); }
     .quote {
       margin-top: auto;
       padding: 22px 16px 4px;
@@ -548,7 +603,15 @@
         </button>
       </nav>
       <div class="mini-calendar">
-        <div class="mini-head"><span id="miniMonth"></span><span>今天</span></div>
+        <div class="mini-head">
+          <button class="mini-nav" id="miniPrev" aria-label="上一个月">‹</button>
+          <button class="mini-title" id="miniTitle" title="切换月/年视图"></button>
+          <button class="mini-nav" id="miniNext" aria-label="下一个月">›</button>
+        </div>
+        <div class="mini-modes">
+          <button class="mini-mode active" data-mini-view="month">月</button>
+          <button class="mini-mode" data-mini-view="year">年</button>
+        </div>
         <div class="mini-grid" id="miniGrid"></div>
       </div>
       <p class="quote">“不必填满每一分钟，<br>要让每一分钟都有意义。”</p>
@@ -794,6 +857,8 @@
       } catch { events = makeSamples(); }
       let currentWeek = startOfWeek(new Date());
       let activeFilter = "all";
+      let miniCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      let miniView = "month";
       let currentUser = null;
       const cloud = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -923,20 +988,57 @@
 
       function renderMiniCalendar() {
         const now = new Date();
-        el("miniMonth").textContent = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
-        const first = new Date(now.getFullYear(), now.getMonth(), 1);
+        el("miniTitle").textContent = miniView === "month"
+          ? `${miniCursor.getFullYear()}年 ${miniCursor.getMonth() + 1}月`
+          : `${miniCursor.getFullYear()}年`;
+        el("miniPrev").setAttribute("aria-label", miniView === "month" ? "上一个月" : "上一年");
+        el("miniNext").setAttribute("aria-label", miniView === "month" ? "下一个月" : "下一年");
+        document.querySelectorAll("[data-mini-view]").forEach(button => {
+          button.classList.toggle("active", button.dataset.miniView === miniView);
+        });
+
+        if (miniView === "year") {
+          el("miniGrid").className = "mini-year-grid";
+          el("miniGrid").innerHTML = Array.from({ length: 12 }, (_, month) => `
+            <button class="${miniCursor.getFullYear() === now.getFullYear() && month === now.getMonth() ? "current" : ""}" data-mini-month="${month}">
+              ${month + 1}月
+            </button>
+          `).join("");
+          document.querySelectorAll("[data-mini-month]").forEach(button => {
+            button.addEventListener("click", () => {
+              miniCursor = new Date(miniCursor.getFullYear(), Number(button.dataset.miniMonth), 1);
+              miniView = "month";
+              renderMiniCalendar();
+            });
+          });
+          return;
+        }
+
+        el("miniGrid").className = "mini-grid";
+        const first = new Date(miniCursor.getFullYear(), miniCursor.getMonth(), 1);
         const offset = (first.getDay() + 6) % 7;
         const start = addDays(first, -offset);
         const labels = ["一", "二", "三", "四", "五", "六", "日"].map(d => `<span class="dow">${d}</span>`);
-        for (let i = 0; i < 35; i++) {
+        for (let i = 0; i < 42; i++) {
           const date = addDays(start, i);
           const classes = [
-            date.getMonth() !== now.getMonth() ? "muted-day" : "",
-            toDateKey(date) === toDateKey(now) ? "today" : ""
+            "mini-day",
+            date.getMonth() !== miniCursor.getMonth() ? "muted-day" : "",
+            toDateKey(date) === toDateKey(now) ? "today" : "",
+            toDateKey(date) === toDateKey(currentWeek) ? "selected" : ""
           ].filter(Boolean).join(" ");
-          labels.push(`<span class="${classes}">${date.getDate()}</span>`);
+          labels.push(`<button class="${classes}" data-mini-date="${toDateKey(date)}">${date.getDate()}</button>`);
         }
         el("miniGrid").innerHTML = labels.join("");
+        document.querySelectorAll("[data-mini-date]").forEach(button => {
+          button.addEventListener("click", () => {
+            const selected = parseDate(button.dataset.miniDate);
+            miniCursor = new Date(selected.getFullYear(), selected.getMonth(), 1);
+            currentWeek = startOfWeek(selected);
+            renderMiniCalendar();
+            renderWeek();
+          });
+        });
       }
 
       function renderHeader() {
@@ -1168,6 +1270,28 @@
       el("profileAuth").addEventListener("click", openAuth);
       el("closeAuth").addEventListener("click", closeAuth);
       authModal.addEventListener("click", event => { if (event.target === authModal) closeAuth(); });
+      document.querySelectorAll("[data-mini-view]").forEach(button => {
+        button.addEventListener("click", () => {
+          miniView = button.dataset.miniView;
+          renderMiniCalendar();
+        });
+      });
+      el("miniTitle").addEventListener("click", () => {
+        miniView = miniView === "month" ? "year" : "month";
+        renderMiniCalendar();
+      });
+      el("miniPrev").addEventListener("click", () => {
+        miniCursor = miniView === "month"
+          ? new Date(miniCursor.getFullYear(), miniCursor.getMonth() - 1, 1)
+          : new Date(miniCursor.getFullYear() - 1, miniCursor.getMonth(), 1);
+        renderMiniCalendar();
+      });
+      el("miniNext").addEventListener("click", () => {
+        miniCursor = miniView === "month"
+          ? new Date(miniCursor.getFullYear(), miniCursor.getMonth() + 1, 1)
+          : new Date(miniCursor.getFullYear() + 1, miniCursor.getMonth(), 1);
+        renderMiniCalendar();
+      });
 
       el("addBtn").addEventListener("click", () => openModal());
       el("mobileAdd").addEventListener("click", () => openModal());
@@ -1180,9 +1304,15 @@
           closeAuth();
         }
       });
-      el("prevWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, -7); renderWeek(); });
-      el("nextWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, 7); renderWeek(); });
-      el("todayBtn").addEventListener("click", () => { currentWeek = startOfWeek(new Date()); renderWeek(); });
+      el("prevWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, -7); renderWeek(); renderMiniCalendar(); });
+      el("nextWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, 7); renderWeek(); renderMiniCalendar(); });
+      el("todayBtn").addEventListener("click", () => {
+        const now = new Date();
+        currentWeek = startOfWeek(now);
+        miniCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+        renderWeek();
+        renderMiniCalendar();
+      });
       document.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filter)));
       document.querySelectorAll("[data-filter-link]").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filterLink)));
 

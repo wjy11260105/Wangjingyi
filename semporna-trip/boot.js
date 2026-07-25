@@ -4,20 +4,20 @@
     "https://unpkg.com/@supabase/supabase-js@2"
   ];
 
-  function loadApp() {
-    const script = document.createElement("script");
-    script.src = "./app.js";
-    document.body.appendChild(script);
-  }
-
   function loadSupabase(index) {
-    if (window.supabase || index >= sources.length) {
-      loadApp();
+    if (window.supabase) {
+      window.dispatchEvent(new CustomEvent("supabase-ready"));
+      return;
+    }
+    if (index >= sources.length) {
+      window.dispatchEvent(new CustomEvent("supabase-unavailable"));
       return;
     }
     const script = document.createElement("script");
     script.src = sources[index];
-    script.onload = () => window.supabase ? loadApp() : loadSupabase(index + 1);
+    script.onload = () => window.supabase
+      ? window.dispatchEvent(new CustomEvent("supabase-ready"))
+      : loadSupabase(index + 1);
     script.onerror = () => loadSupabase(index + 1);
     document.head.appendChild(script);
   }

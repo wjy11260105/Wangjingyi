@@ -89,6 +89,12 @@
       this.syncing = false;
       this.save();
     }
+    connectCloud() {
+      if (!this.cloud && window.supabase) {
+        this.cloud = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      }
+      return Boolean(this.cloud);
+    }
     load() {
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -178,6 +184,7 @@
       this.emit("synced");
     }
     async signIn(email, password) {
+      this.connectCloud();
       if (!this.cloud) return { error: new Error("云同步组件加载失败，请刷新页面或更换网络后重试") };
       const result = await this.cloud.auth.signInWithPassword({ email, password });
       if (!result.error) {
@@ -188,6 +195,7 @@
       return result;
     }
     signUp(email, password) {
+      this.connectCloud();
       if (!this.cloud) return Promise.resolve({ error: new Error("云同步组件加载失败，请刷新页面或更换网络后重试") });
       return this.cloud.auth.signUp({
         email, password,
@@ -564,6 +572,14 @@
   bind();
   updateAccount("auth");
   render();
-  store.initializeAuth();
+  if (store.connectCloud()) {
+    store.initializeAuth();
+  } else {
+    window.addEventListener("supabase-ready", () => {
+      store.connectCloud();
+      store.initializeAuth();
+    }, { once: true });
+    window.addEventListener("supabase-unavailable", () => updateAccount("cloud-error"), { once: true });
+  }
   window.addEventListener("focus", () => { if (store.user) store.sync(); });
 })();

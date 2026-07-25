@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#edf7f5">
+  <title>仙本那 · 海岛旅行手账</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#/overview">
+        <span class="brand-icon">S</span>
+        <span>仙本那手账<small>SEMPORNA · 2026</small></span>
+      </a>
+      <div class="trip-chip">
+        <span>MY TRIP</span>
+        <strong>08.14 — 08.22</strong>
+        <small>9 天 · 马来西亚</small>
+      </div>
+      <nav class="nav" aria-label="旅行管理">
+        <a href="#/overview" data-route="overview"><i>⌂</i>旅行总览</a>
+        <a href="#/itinerary" data-route="itinerary"><i>≋</i>每日行程</a>
+        <a href="#/wishlist" data-route="wishlist"><i>☆</i>想做的事</a>
+        <a href="#/journal" data-route="journal"><i>✎</i>学习与感悟</a>
+        <a href="#/budget" data-route="budget"><i>¥</i>预算支出</a>
+        <a href="#/checklist" data-route="checklist"><i>✓</i>行前清单</a>
+      </nav>
+      <div class="side-note">
+        <span>旅行提醒</span>
+        <p>潜水后 18–24 小时内避免乘坐飞机。</p>
+      </div>
+      <button class="account" id="accountButton">
+        <span class="avatar">我</span>
+        <span><strong id="accountName">本地模式</strong><small id="syncLabel">数据保存在此设备</small></span>
+      </button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p id="todayLabel">SEMPORNA TRIP PLANNER</p>
+          <h1 id="pageTitle">旅行总览</h1>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button" id="syncButton" aria-label="同步">↻</button>
+          <button class="primary-button" id="quickAdd">＋ 快速记录</button>
+        </div>
+      </header>
+      <div id="view" class="view"></div>
+    </main>
+
+    <aside class="right-panel">
+      <section class="countdown-card">
+        <span>距离出发还有</span>
+        <strong id="countdown">20</strong>
+        <small>天</small>
+        <div class="wave"></div>
+      </section>
+      <section>
+        <div class="panel-head"><h3>旅行进度</h3><span id="tripProgress">0%</span></div>
+        <div class="progress"><i id="tripProgressBar"></i></div>
+        <p class="panel-copy" id="tripProgressCopy">正在整理行前清单</p>
+      </section>
+      <section>
+        <div class="panel-head"><h3>下一项安排</h3><a href="#/itinerary">全部</a></div>
+        <div id="nextItems" class="side-list"></div>
+      </section>
+      <section class="emergency">
+        <span>EMERGENCY</span>
+        <strong>马来西亚报警 / 急救</strong>
+        <a href="tel:999">999</a>
+      </section>
+    </aside>
+  </div>
+
+  <nav class="mobile-nav">
+    <a href="#/overview" data-route="overview"><i>⌂</i>总览</a>
+    <a href="#/itinerary" data-route="itinerary"><i>≋</i>行程</a>
+    <button id="mobileAdd">＋</button>
+    <a href="#/journal" data-route="journal"><i>✎</i>手账</a>
+    <a href="#/checklist" data-route="checklist"><i>✓</i>清单</a>
+  </nav>
+
+  <div class="modal-backdrop" id="editorModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div><p id="modalKicker">NEW ITEM</p><h2 id="modalTitle">新增记录</h2></div>
+        <button class="icon-button" data-close-editor>×</button>
+      </div>
+      <form id="itemForm">
+        <input type="hidden" id="itemType">
+        <input type="hidden" id="itemId">
+        <div class="form-grid" id="formFields"></div>
+        <div class="modal-actions">
+          <button type="button" class="danger-button hidden" id="deleteItem">删除</button>
+          <div><button type="button" class="secondary-button" data-close-editor>取消</button><button type="submit" class="primary-button">保存</button></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="quickModal">
+    <div class="modal compact">
+      <div class="modal-head">
+        <div><p>CAPTURE</p><h2>记录旅行灵感</h2></div>
+        <button class="icon-button" data-close-quick>×</button>
+      </div>
+      <div class="quick-grid">
+        <button data-quick="itinerary"><i>≋</i><strong>行程</strong><small>安排一天的活动</small></button>
+        <button data-quick="wish"><i>☆</i><strong>想做的事</strong><small>保存旅行愿望</small></button>
+        <button data-quick="learning"><i>▤</i><strong>学习</strong><small>记录每日输入</small></button>
+        <button data-quick="reflection"><i>✎</i><strong>感悟</strong><small>留下当日心情</small></button>
+        <button data-quick="expense"><i>¥</i><strong>支出</strong><small>更新旅行花费</small></button>
+        <button data-quick="packing"><i>✓</i><strong>清单</strong><small>补充行前准备</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal compact">
+      <div class="modal-head">
+        <div><p>CLOUD SYNC</p><h2>登录并同步旅行</h2></div>
+        <button class="icon-button" data-close-auth>×</button>
+      </div>
+      <p class="muted">手机和电脑登录同一邮箱后，行程、学习和感悟会自动保持一致。</p>
+      <form id="authForm" class="form-grid">
+        <label class="field full"><span>邮箱</span><input id="authEmail" type="email" required autocomplete="email"></label>
+        <label class="field full"><span>密码</span><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></label>
+        <div class="auth-actions full"><button type="button" class="secondary-button" id="signUp">注册</button><button type="submit" class="primary-button">登录并同步</button></div>
+      </form>
+      <div id="signedPanel" class="signed-panel hidden">
+        <p>已登录 <strong id="signedEmail"></strong></p>
+        <div class="auth-actions"><button class="secondary-button" id="manualSync">立即同步</button><button class="danger-button" id="signOut">退出登录</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

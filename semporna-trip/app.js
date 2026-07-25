@@ -33,7 +33,7 @@
   const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const routeTitles = {
     overview: "旅行总览", itinerary: "每日行程", wishlist: "想做的事",
-    journal: "学习与感悟", budget: "预算支出", checklist: "行前清单"
+    journal: "学习与感悟", knowledge: "旅行知识", budget: "预算支出", checklist: "行前清单"
   };
   const categoryNames = {
     transport: "交通", stay: "住宿", diving: "潜水", island: "跳岛", food: "美食", free: "自由活动",
@@ -46,6 +46,8 @@
   let selectedDate = dateKey(START_DATE);
   let journalTab = "learning";
   let currentRoute = "overview";
+  let cnyToMyrRate = Number(localStorage.getItem("semporna-cny-myr-rate")) || 0.60417;
+  let exchangeRateDate = localStorage.getItem("semporna-rate-date") || "参考汇率";
   let toastTimer;
 
   function sampleItems() {
@@ -296,12 +298,13 @@
           if (!local || new Date(item.updated_at) >= new Date(local.updated_at)) merged.set(item.id, item);
         });
         this.items = [...merged.values()];
-        if (this.items.length) {
-          const result = await this.cloud.from(TABLE).upsert(this.items.map(item => ({ ...item, user_id: this.user.id })));
-          if (result.error) {
-            this.syncing = false;
-            return this.emit("sync-error");
-          }
+      }
+      applyBookingMigration();
+      if (this.items.length) {
+        const result = await this.cloud.from(TABLE).upsert(this.items.map(item => ({ ...item, user_id: this.user.id })));
+        if (result.error) {
+          this.syncing = false;
+          return this.emit("sync-error");
         }
       }
       this.fresh = false;
@@ -332,8 +335,69 @@
   }
 
   const store = new TripStore();
+  function applyBookingMigration() {
+    const migrationKey = "semporna-booking-260815-v1";
+    const obsoleteTitles = new Set([
+      "抵达斗湖，前往仙本那", "入住与海鲜晚餐", "马步岛 · 卡帕莱跳岛",
+      "敦沙卡兰海洋公园", "马达京潜水 / 浮潜", "自由探索与休息",
+      "往返机票预算", "住宿预算", "跳岛与潜水预算"
+    ]);
+    store.items.forEach(item => {
+      if (obsoleteTitles.has(item.title) && !item.deleted_at) {
+        item.deleted_at = nowIso();
+        item.updated_at = item.deleted_at;
+      }
+    });
+    const official = [
+      ["26081500-0000-4000-8000-000000000001", "itinerary", "2026-08-15", "07:50", "抵达斗湖机场 · AK6267", "transport", "预订资料确认抵达时间为 07:50；抵达后乘拼车前往仙本那。"],
+      ["26081500-0000-4000-8000-000000000002", "itinerary", "2026-08-15", "14:00", "UC 民宿入住", "stay", "住宿日期为 8月15日至20日，共5晚，含简易早餐；仙本那房间通常14:00入住。"],
+      ["26081500-0000-4000-8000-000000000003", "itinerary", "2026-08-15", null, "PADI OW + AOW · 泳池与理论", "diving", "完成开放水域与进阶开放水域课程的泳池训练和理论学习，具体集合时间以潜店通知为准。"],
+      ["26081500-0000-4000-8000-000000000004", "itinerary", "2026-08-16", "08:00", "OW 开放水域训练 · 3潜", "diving", "全天完成3次开放水域训练潜水；潜点与集合时间以潜店当日通知为准。"],
+      ["26081500-0000-4000-8000-000000000005", "itinerary", "2026-08-17", "08:00", "OW 1潜 + AOW 2潜", "diving", "完成1次OW与2次AOW开放水域潜水，共3潜。"],
+      ["26081500-0000-4000-8000-000000000006", "itinerary", "2026-08-18", "08:00", "AOW 进阶开放水域训练 · 3潜", "diving", "完成3次进阶开放水域训练潜水。"],
+      ["26081500-0000-4000-8000-000000000007", "itinerary", "2026-08-19", "07:30", "诗巴丹 Fun Dive · 3潜", "diving", "官方要求诗巴丹路线8:00前集合；具体时间、许可与海况以潜店通知为准。"],
+      ["26081500-0000-4000-8000-000000000008", "itinerary", "2026-08-20", "09:00", "UC 民宿退房", "stay", "预订住宿于8月20日结束；仙本那房间通常09:00退房。"],
+      ["26081500-0000-4000-8000-000000000009", "itinerary", "2026-08-20", "10:00", "潜水后恢复与整理", "free", "完成潜水课程后补水、休息并整理日志，注意后续禁飞间隔。"],
+      ["26081500-0000-4000-8000-000000000010", "itinerary", "2026-08-22", null, "拼车前往斗湖机场", "transport", "送机时间和返程航班仍待确认，需提前与旅行机构确认。"],
+      ["26081500-0000-4000-8000-000000000011", "learning", "2026-08-15", null, "压力、浮力与耳压平衡", "diving", "复习深度与压力变化、面镜排水、中性浮力和耳压平衡的基本原理。"],
+      ["26081500-0000-4000-8000-000000000012", "learning", "2026-08-16", null, "OW：潜伴检查与水下沟通", "diving", "记录 BWRAF 潜伴检查、常用手势和气量管理。"],
+      ["26081500-0000-4000-8000-000000000013", "learning", "2026-08-17", null, "AOW：导航与深潜意识", "diving", "学习指北针导航、深度对空气消耗和判断力的影响。"],
+      ["26081500-0000-4000-8000-000000000014", "learning", "2026-08-18", null, "中性浮力与海洋保护", "diving", "观察自己的配重、呼吸和身体姿态，避免触碰珊瑚与追逐海洋生物。"],
+      ["26081500-0000-4000-8000-000000000015", "learning", "2026-08-19", null, "诗巴丹海洋生态观察", "island", "记录当天观察到的鱼群、海龟或其他物种，以及负责任潜水行为。"]
+    ];
+    official.forEach(([id, itemType, tripDate, startTime, title, category, details]) => {
+      if (store.get(id)) return;
+      store.items.push({
+        id, item_type: itemType, trip_date: tripDate, start_time: startTime, title, details,
+        category, status: "pending", amount: null, currency: "CNY", sort_order: 0,
+        metadata: { source: "confirmed-booking" }, created_at: nowIso(), updated_at: nowIso(), deleted_at: null
+      });
+    });
+    const expenses = [
+      ["26081500-0000-4000-8000-000000000021", "机场拼车接送", 140, "transport"],
+      ["26081500-0000-4000-8000-000000000022", "UC 民宿 5晚", 900, "hotel"],
+      ["26081500-0000-4000-8000-000000000023", "PADI OW + AOW 课程", 2900, "activity"],
+      ["26081500-0000-4000-8000-000000000024", "诗巴丹 Fun Dive 3潜", 1200, "activity"],
+      ["26081500-0000-4000-8000-000000000025", "4天船程燃油附加费", 120, "transport"]
+    ];
+    expenses.forEach(([id, title, amount, category]) => {
+      if (store.get(id)) return;
+      store.items.push({
+        id, item_type: "expense", trip_date: "2026-08-15", start_time: null, title,
+        details: category === "transport" && amount === 120 ? "燃油附加费可能随油价变化。" : "来自已确认预订资料。",
+        category, status: "planned", amount, currency: "MYR", sort_order: 0, metadata: { source: "confirmed-booking" },
+        created_at: nowIso(), updated_at: nowIso(), deleted_at: null
+      });
+    });
+    store.save();
+    localStorage.setItem(migrationKey, "done");
+  }
+  applyBookingMigration();
   const list = type => store.list(type);
-  const totalExpenses = () => list("expense").reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const toCny = item => item.currency === "MYR"
+    ? Number(item.amount || 0) / cnyToMyrRate
+    : Number(item.amount || 0);
+  const totalExpenses = () => list("expense").reduce((sum, item) => sum + toCny(item), 0);
   const completedPacking = () => list("packing").filter(item => item.status === "done").length;
 
   function toast(message) {
@@ -384,7 +448,7 @@
         ${metric("≋", "已安排行程", `${itinerary.length}`, "覆盖 8月14日—22日")}
         ${metric("☆", "旅行愿望", `${wishes.filter(item => item.status !== "done").length}`, "等待在旅途中实现")}
         ${metric("✓", "清单完成", packing.length ? `${Math.round(completedPacking() / packing.length * 100)}%` : "0%", `${completedPacking()} / ${packing.length} 项`)}
-        ${metric("¥", "当前预算", `¥${expenses.toLocaleString()}`, `总预算 ¥${BUDGET.toLocaleString()}`)}
+        ${metric("¥", "当前预算", `¥${Math.round(expenses).toLocaleString()}`, `总预算 ¥${BUDGET.toLocaleString()}`)}
       </section>
       <section class="content-grid">
         <div>
@@ -459,19 +523,67 @@
       </section>`;
   }
 
+  function knowledgeView() {
+    const myrToCny = 1 / cnyToMyrRate;
+    return `
+      <div class="toolbar"><div><p>从汇率、语言、文化到海洋生态，为旅行建立更完整的理解。</p></div></div>
+      <section class="content-grid">
+        <div>
+          <article class="card exchange-card">
+            <div class="card-head"><h3>人民币 / 马币换算</h3><span class="tag">${esc(exchangeRateDate)}</span></div>
+            <div class="exchange-rate"><span>1 MYR</span><strong>≈ ${myrToCny.toFixed(3)} CNY</strong></div>
+            <div class="converter">
+              <label class="field"><span>人民币 CNY</span><input id="cnyAmount" type="number" min="0" step="0.01" value="100"></label>
+              <span>⇄</span>
+              <label class="field"><span>马币 MYR</span><input id="myrAmount" type="number" min="0" step="0.01" value="${(100 * cnyToMyrRate).toFixed(2)}"></label>
+            </div>
+            <p class="rate-note">在线参考汇率不包含银行、信用卡或换汇点手续费，实际成交价可能不同。</p>
+          </article>
+          <article class="card">
+            <div class="card-head"><h3>潜水学习路径</h3><span class="tag">OW → AOW</span></div>
+            <div class="list">
+              <article class="item-card"><div class="row-top">${tag("diving")}<small>基础</small></div><h4>压力、浮力与空气消耗</h4><p>深度增加时压力上升、空气体积缩小，空气消耗也会加快。保持缓慢呼吸并持续观察残压。</p></article>
+              <article class="item-card"><div class="row-top">${tag("diving")}<small>安全</small></div><h4>潜伴制度与禁飞间隔</h4><p>下水前完成潜伴检查，水下保持沟通。多次潜水后按电脑表和机构建议预留足够禁飞时间。</p></article>
+              <article class="item-card"><div class="row-top">${tag("island")}<small>环保</small></div><h4>负责任地观察海洋</h4><p>保持中性浮力，不触碰珊瑚、不喂食或追逐动物，也不要带走任何海洋生物。</p></article>
+            </div>
+          </article>
+        </div>
+        <div>
+          <article class="card">
+            <div class="card-head"><h3>常用马来语</h3><span class="tag">BAHASA MELAYU</span></div>
+            <div class="phrase-list">
+              <div><strong>Terima kasih</strong><span>谢谢</span></div>
+              <div><strong>Selamat pagi</strong><span>早上好</span></div>
+              <div><strong>Berapa harga?</strong><span>多少钱？</span></div>
+              <div><strong>Tolong</strong><span>请帮忙</span></div>
+              <div><strong>Saya tidak faham</strong><span>我不明白</span></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-head"><h3>在地知识</h3><span class="tag">SEMPORNA</span></div>
+            <div class="list">
+              <article class="item-card"><h4>时间与支付</h4><p>马来西亚与中国同为 UTC+8，无时差。常备少量马币现金，刷卡或换汇前确认手续费。</p></article>
+              <article class="item-card"><h4>天气与海况</h4><p>热带天气变化快，跳岛与潜点可能因风浪调整。防晒、补水并服从船员和潜导安排。</p></article>
+              <article class="item-card"><h4>尊重当地社区</h4><p>征得同意后再拍摄人物，了解当地生活背景，减少一次性塑料并妥善带走垃圾。</p></article>
+            </div>
+          </article>
+        </div>
+      </section>`;
+  }
+
   function budgetView() {
     const rows = list("expense").sort(sortByDate);
     const spent = totalExpenses();
     const grouped = rows.reduce((map, item) => {
-      map[item.category] = (map[item.category] || 0) + Number(item.amount || 0);
+      map[item.category] = (map[item.category] || 0) + toCny(item);
       return map;
     }, {});
     return `
       <div class="toolbar"><div><h2 class="view-title">预算支出</h2><p>用人民币记录计划和实际花费，旅行结束后可以完整复盘。</p></div><button class="primary-button" data-add="expense">＋ 记录支出</button></div>
       <section class="metrics">
         ${metric("¥", "总预算", `¥${BUDGET.toLocaleString()}`, "可在后续版本调整")}
-        ${metric("↗", "已规划 / 支出", `¥${spent.toLocaleString()}`, `${Math.round(spent / BUDGET * 100)}% 预算占用`)}
-        ${metric("○", "剩余预算", `¥${Math.max(0, BUDGET - spent).toLocaleString()}`, "保留应急空间")}
+        ${metric("↗", "已规划 / 支出", `¥${Math.round(spent).toLocaleString()}`, `${Math.round(spent / BUDGET * 100)}% 预算占用`)}
+        ${metric("○", "剩余预算", `¥${Math.round(Math.max(0, BUDGET - spent)).toLocaleString()}`, "保留应急空间")}
         ${metric("≋", "支出项目", rows.length, "机票、酒店、活动等")}
       </section>
       <section class="content-grid">
@@ -479,13 +591,13 @@
           <div class="card-head"><h3>费用明细</h3><span class="tag">${rows.length} 项</span></div>
           <div class="list">${rows.map(item => `<article class="item-card expense-row" data-edit="${item.id}">
             <div>${tag(item.category)}<h4>${esc(item.title)}</h4><p>${formatDate(item.trip_date)} · ${item.status === "paid" ? "已支付" : "计划费用"}</p></div>
-            <strong>¥${Number(item.amount || 0).toLocaleString()}</strong>
+            <strong>${item.currency === "MYR" ? "RM" : "¥"}${Number(item.amount || 0).toLocaleString()}</strong>
           </article>`).join("") || empty("¥", "还没有费用记录", "从机票或住宿开始")}</div>
         </article>
         <article class="card">
           <div class="card-head"><h3>费用分布</h3><span>${Math.round(spent / BUDGET * 100)}%</span></div>
           <div class="category-bars">${Object.entries(grouped).map(([category, amount]) => `
-            <div><div class="bar-head"><span>${esc(categoryNames[category] || category)}</span><span>¥${amount.toLocaleString()}</span></div><div class="progress"><i style="width:${spent ? amount / spent * 100 : 0}%"></i></div></div>`).join("")}</div>
+            <div><div class="bar-head"><span>${esc(categoryNames[category] || category)}</span><span>约 ¥${Math.round(amount).toLocaleString()}</span></div><div class="progress"><i style="width:${spent ? amount / spent * 100 : 0}%"></i></div></div>`).join("")}</div>
         </article>
       </section>`;
   }
@@ -527,7 +639,7 @@
       ["mood", "今日心情", "select", true, [["1","疲惫"],["2","平静"],["3","不错"],["4","开心"],["5","惊喜"]]]
     ]},
     expense: { title: "预算支出", kicker: "BUDGET", fields: [
-      ["title", "费用名称", "text", true], ["amount", "金额（人民币）", "number", true], ["trip_date", "日期", "date"],
+      ["title", "费用名称", "text", true], ["amount", "金额", "number", true], ["currency", "币种", "select", true, [["CNY","人民币 CNY"],["MYR","马币 MYR"]]], ["trip_date", "日期", "date"],
       ["category", "类别", "select", true, [["flight","机票"],["hotel","酒店"],["activity","活动"],["meal","餐饮"],["transport","交通"],["equipment","装备"],["other","其他"]]],
       ["status", "状态", "select", true, [["planned","计划费用"],["paid","已支付"]]], ["details", "备注", "textarea"]
     ]},
@@ -604,7 +716,7 @@
     if (!routeTitles[currentRoute]) currentRoute = "overview";
     $("#pageTitle").textContent = routeTitles[currentRoute];
     $$("[data-route]").forEach(link => link.classList.toggle("active", link.dataset.route === currentRoute));
-    const views = { overview: overviewView, itinerary: itineraryView, wishlist: wishlistView, journal: journalView, budget: budgetView, checklist: checklistView };
+    const views = { overview: overviewView, itinerary: itineraryView, wishlist: wishlistView, journal: journalView, knowledge: knowledgeView, budget: budgetView, checklist: checklistView };
     $("#view").innerHTML = views[currentRoute]();
     renderSide();
   }
@@ -620,6 +732,22 @@
     if (type === "schema-missing") toast("请先在 Supabase 执行仙本那旅行数据表 SQL");
     if (type === "sync-error") toast("云端同步失败，本地记录不会丢失");
     if (type === "cloud-error") toast("云同步组件加载失败，请刷新页面或更换网络");
+  }
+
+  async function refreshExchangeRate() {
+    try {
+      const response = await fetch("https://api.frankfurter.dev/v2/rate/CNY/MYR");
+      if (!response.ok) throw new Error("汇率服务暂不可用");
+      const data = await response.json();
+      if (!Number(data.rate)) throw new Error("汇率数据无效");
+      cnyToMyrRate = Number(data.rate);
+      exchangeRateDate = `${data.date} 更新`;
+      localStorage.setItem("semporna-cny-myr-rate", String(cnyToMyrRate));
+      localStorage.setItem("semporna-rate-date", exchangeRateDate);
+      render();
+    } catch {
+      // Keep the cached reference rate so the converter remains usable offline.
+    }
   }
 
   function bind() {
@@ -641,6 +769,14 @@
       if (date) { selectedDate = date.dataset.date; render(); return; }
       const tab = event.target.closest("[data-journal-tab]");
       if (tab) { journalTab = tab.dataset.journalTab; render(); }
+    });
+    $("#view").addEventListener("input", event => {
+      if (event.target.id === "cnyAmount") {
+        $("#myrAmount").value = (Number(event.target.value || 0) * cnyToMyrRate).toFixed(2);
+      }
+      if (event.target.id === "myrAmount") {
+        $("#cnyAmount").value = (Number(event.target.value || 0) / cnyToMyrRate).toFixed(2);
+      }
     });
     $("#quickAdd").addEventListener("click", () => open("#quickModal"));
     $("#mobileAdd").addEventListener("click", () => open("#quickModal"));
@@ -695,5 +831,6 @@
   updateAccount("auth");
   render();
   store.initializeAuth();
+  refreshExchangeRate();
   window.addEventListener("focus", () => { if (store.user) store.sync(); });
 })();

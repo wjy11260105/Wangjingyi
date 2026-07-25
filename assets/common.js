@@ -38,6 +38,7 @@
     },
     set(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
+      window.CloudSync?.schedule(key);
     }
   };
 
@@ -185,6 +186,7 @@
     init() {
       App.renderMiniCalendar();
       App.renderMobileTabs();
+      window.CloudSync?.init();
 
       document.querySelectorAll("#sidebar [data-nav]").forEach(btn => {
         btn.addEventListener("click", () => App.navigate(btn.dataset.nav));

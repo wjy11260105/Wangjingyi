@@ -61,6 +61,11 @@
         <div class="mini-head"><span id="miniMonth"></span><span>今天</span></div>
         <div class="mini-grid" id="miniGrid"></div>
       </div>
+      <button class="sync-button" data-sync-button type="button">
+        <span class="sync-dot" data-sync-dot></span>
+        <span data-sync-label>登录同步</span>
+        <span class="sync-arrow">›</span>
+      </button>
       <div class="data-actions">
         <button class="ghost-btn small" id="exportBtn">导出数据</button>
         <button class="ghost-btn small" id="importBtn">导入数据</button>
@@ -70,7 +75,13 @@
     </aside>
 
     <main class="main">
-      <nav class="mobile-tabs" id="mobileTabs" aria-label="移动端导航"></nav>
+      <div class="mobile-head">
+        <nav class="mobile-tabs" id="mobileTabs" aria-label="移动端导航"></nav>
+        <button class="mobile-sync" data-sync-button type="button" aria-label="云同步">
+          <span class="sync-dot" data-sync-dot></span>
+          <span data-sync-label>登录同步</span>
+        </button>
+      </div>
       <div id="viewRoot"></div>
     </main>
   </div>
@@ -98,6 +109,7 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="assets/common.js"></script>
+  <script src="assets/sync.js"></script>
   <script src="assets/schedule.js"></script>
   <script src="assets/goals.js"></script>
   <script src="assets/training.js"></script>

@@ -11,8 +11,8 @@
     "life-habits-v1",
     "life-books-v1",
     "life-trips-v1",
-    "life-tarot-v1",
-    "life-birth-v1"
+    "life-birth-v1",
+    "life-mystic-events-v1"
   ];
 
   let session = readJSON(SESSION_KEY, null);

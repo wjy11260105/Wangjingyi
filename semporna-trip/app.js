@@ -340,7 +340,7 @@
     const obsoleteTitles = new Set([
       "抵达斗湖，前往仙本那", "入住与海鲜晚餐", "马步岛 · 卡帕莱跳岛",
       "敦沙卡兰海洋公园", "马达京潜水 / 浮潜", "自由探索与休息",
-      "往返机票预算", "住宿预算", "跳岛与潜水预算"
+      "往返机票预算", "住宿预算", "跳岛与潜水预算", "抵达斗湖机场 · AK6267"
     ]);
     store.items.forEach(item => {
       if (obsoleteTitles.has(item.title) && !item.deleted_at) {
@@ -349,7 +349,10 @@
       }
     });
     const official = [
-      ["26081500-0000-4000-8000-000000000001", "itinerary", "2026-08-15", "07:50", "抵达斗湖机场 · AK6267", "transport", "预订资料确认抵达时间为 07:50；抵达后乘拼车前往仙本那。"],
+      ["26081500-0000-4000-8000-000000000031", "itinerary", "2026-08-14", "22:05", "上海浦东 T2 → 亚庇 T1", "transport", "春秋航空 9C8593，8月15日02:35抵达亚庇，航程跨日。"],
+      ["26081500-0000-4000-8000-000000000032", "itinerary", "2026-08-15", "02:35", "亚庇机场转机 · 4小时25分", "transport", "抵达亚庇T1后在同一航站楼转机，下一程07:00起飞。"],
+      ["26081500-0000-4000-8000-000000000033", "itinerary", "2026-08-15", "07:00", "亚庇 T1 → 斗湖 · AK6272", "transport", "马来西亚亚洲航空 AK6272，07:50抵达斗湖。"],
+      ["26081500-0000-4000-8000-000000000034", "itinerary", "2026-08-15", "07:50", "斗湖机场拼车 → 仙本那", "transport", "预订资料确认抵达后乘共享面包车前往仙本那，具体上车点以接机通知为准。"],
       ["26081500-0000-4000-8000-000000000002", "itinerary", "2026-08-15", "14:00", "UC 民宿入住", "stay", "住宿日期为 8月15日至20日，共5晚，含简易早餐；仙本那房间通常14:00入住。"],
       ["26081500-0000-4000-8000-000000000003", "itinerary", "2026-08-15", null, "PADI OW + AOW · 泳池与理论", "diving", "完成开放水域与进阶开放水域课程的泳池训练和理论学习，具体集合时间以潜店通知为准。"],
       ["26081500-0000-4000-8000-000000000004", "itinerary", "2026-08-16", "08:00", "OW 开放水域训练 · 3潜", "diving", "全天完成3次开放水域训练潜水；潜点与集合时间以潜店当日通知为准。"],
@@ -475,14 +478,22 @@
   }
 
   function itineraryView() {
-    const rows = list("itinerary").filter(item => item.trip_date === selectedDate).sort((a, b) => String(a.start_time).localeCompare(String(b.start_time)));
     return `
       <div class="toolbar"><div><h2 class="view-title">每日行程</h2><p>从抵达、跳岛到返程，为每一天保留清晰安排和自由空间。</p></div><button class="primary-button" data-add="itinerary">＋ 添加行程</button></div>
       ${dateRail()}
-      <section class="card">
-        <div class="card-head"><h3>${formatDate(selectedDate)} · ${weekdays[parseDate(selectedDate).getDay()]}</h3><span class="tag">${rows.length} 项安排</span></div>
-        <div class="timeline">${rows.length ? rows.map(itineraryCard).join("") : empty("≋", "这一天还没有安排", "可以留白，也可以添加一项期待")}</div>
-      </section>`;
+      <div class="all-days">
+        ${tripDays.map((day, index) => {
+          const key = dateKey(day);
+          const rows = list("itinerary").filter(item => item.trip_date === key).sort((a, b) => String(a.start_time || "99:99").localeCompare(String(b.start_time || "99:99")));
+          return `<section class="card trip-day-section ${selectedDate === key ? "selected-day" : ""}" id="trip-day-${key}" data-day-section="${key}">
+            <div class="card-head">
+              <div><span class="day-index">DAY ${index + 1}</span><h3>${formatDate(key)} · ${weekdays[day.getDay()]}</h3></div>
+              <div class="day-actions"><span class="tag">${rows.length} 项安排</span><button class="secondary-button" data-add="itinerary" data-add-date="${key}">＋</button></div>
+            </div>
+            <div class="timeline">${rows.length ? rows.map(itineraryCard).join("") : empty("≋", "这一天还没有安排", "可以留白，也可以添加一项期待")}</div>
+          </section>`;
+        }).join("")}
+      </div>`;
   }
 
   function wishCard(item) {
@@ -754,7 +765,10 @@
     window.addEventListener("hashchange", render);
     $("#view").addEventListener("click", event => {
       const add = event.target.closest("[data-add]");
-      if (add) return openEditor(add.dataset.add);
+      if (add) {
+        if (add.dataset.addDate) selectedDate = add.dataset.addDate;
+        return openEditor(add.dataset.add);
+      }
       const edit = event.target.closest("[data-edit]");
       if (edit && !event.target.closest("[data-toggle]")) return openEditor(store.get(edit.dataset.edit).item_type, edit.dataset.edit);
       const toggle = event.target.closest("[data-toggle]");
@@ -766,7 +780,12 @@
         return;
       }
       const date = event.target.closest("[data-date]");
-      if (date) { selectedDate = date.dataset.date; render(); return; }
+      if (date) {
+        selectedDate = date.dataset.date;
+        render();
+        requestAnimationFrame(() => document.querySelector(`[data-day-section="${selectedDate}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+        return;
+      }
       const tab = event.target.closest("[data-journal-tab]");
       if (tab) { journalTab = tab.dataset.journalTab; render(); }
     });

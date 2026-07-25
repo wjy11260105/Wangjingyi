@@ -116,6 +116,12 @@ a { color: inherit; text-decoration: none; }
 .date-button small { font-size: 7px; }
 .date-button.active { color: #fff; border-color: var(--teal); background: var(--teal); }
 .date-button.active strong { color: #fff; }
+.all-days { display:grid; gap:13px; }
+.trip-day-section { scroll-margin-top:18px; transition:border-color .2s, box-shadow .2s; }
+.trip-day-section.selected-day { border-color:#9bc6bf; box-shadow:0 8px 24px rgba(12,109,105,.07); }
+.day-index { display:block; margin-bottom:5px; color:var(--coral); font-size:7px; font-weight:850; letter-spacing:1px; }
+.day-actions { display:flex; align-items:center; gap:7px; }
+.day-actions .secondary-button { width:30px; height:30px; padding:0; border-radius:9px; }
 .timeline { position: relative; display: grid; gap: 10px; padding-left: 29px; }
 .timeline::before { content:""; position:absolute; top:8px; bottom:8px; left:11px; width:1px; background:#cfe0dc; }
 .timeline-item { position: relative; display: grid; grid-template-columns: 53px 1fr; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 13px; cursor:pointer; }

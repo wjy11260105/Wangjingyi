@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f3ef">
+  <title>日程 · 把每一天安排得刚刚好</title>
+  <style>
+    :root {
+      --ink: #17231d;
+      --muted: #768078;
+      --line: #e7e6df;
+      --paper: #fff;
+      --canvas: #f4f3ef;
+      --green: #244f3d;
+      --green-light: #e5eee8;
+      --orange: #e9793f;
+      --radius: 20px;
+      --shadow: 0 18px 48px rgba(30, 46, 38, .08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    svg { display: block; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 250px minmax(620px, 1fr) 290px;
+      min-height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+      background: var(--paper);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      padding: 32px 22px;
+      border-right: 1px solid var(--line);
+      background: #fafaf7;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 42px;
+      padding: 0 8px;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -.4px;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 35px;
+      height: 35px;
+      color: white;
+      background: var(--green);
+      border-radius: 11px;
+      transform: rotate(-3deg);
+    }
+    .nav-label, .section-label {
+      margin: 0 10px 11px;
+      color: #a0a7a1;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+    .nav { display: grid; gap: 5px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 11px 13px;
+      border: 0;
+      border-radius: 11px;
+      color: #667069;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: .2s ease;
+    }
+    .nav-item:hover, .nav-item.active {
+      color: var(--green);
+      background: var(--green-light);
+      font-weight: 700;
+    }
+    .nav-item svg { width: 18px; }
+    .nav-count {
+      min-width: 23px;
+      margin-left: auto;
+      padding: 2px 6px;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--green);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .mini-calendar {
+      margin-top: 34px;
+      padding: 18px 15px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+    .mini-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      font-size: 11px;
+    }
+    .mini-grid span {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border-radius: 7px;
+      color: #707a73;
+    }
+    .mini-grid .dow { color: #abb0ac; font-weight: 700; }
+    .mini-grid .muted-day { color: #cdd0cd; }
+    .mini-grid .today { color: #fff; background: var(--green); font-weight: 800; }
+    .quote {
+      margin-top: auto;
+      padding: 22px 16px 4px;
+      color: #8b938d;
+      font-family: Georgia, serif;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 34px 34px 38px;
+      overflow: hidden;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--orange);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Songti SC", serif;
+      font-size: clamp(28px, 3vw, 40px);
+      font-weight: 500;
+      letter-spacing: -1px;
+    }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn, .ghost-btn, .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 42px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .icon-btn {
+      width: 42px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .icon-btn:hover, .ghost-btn:hover { border-color: #bdc4be; background: #f7f8f6; }
+    .ghost-btn {
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .primary-btn {
+      padding: 0 17px;
+      border: 0;
+      color: #fff;
+      background: var(--green);
+      box-shadow: 0 8px 20px rgba(36, 79, 61, .2);
+      font-size: 13px;
+      font-weight: 750;
+    }
+    .primary-btn:hover { transform: translateY(-1px); background: #193c2d; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1fr;
+      gap: 13px;
+      margin-bottom: 25px;
+    }
+    .stat {
+      position: relative;
+      min-height: 112px;
+      padding: 20px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fafaf8;
+    }
+    .stat.primary { color: #fff; background: var(--green); border-color: var(--green); }
+    .stat-label { color: #8a938d; font-size: 12px; font-weight: 650; }
+    .primary .stat-label { color: rgba(255,255,255,.68); }
+    .stat-value {
+      margin-top: 9px;
+      font-family: Georgia, serif;
+      font-size: 30px;
+      line-height: 1;
+    }
+    .stat-sub { margin-top: 8px; color: #969d98; font-size: 11px; }
+    .primary .stat-sub { color: rgba(255,255,255,.6); }
+    .stat-decoration {
+      position: absolute;
+      right: -20px;
+      bottom: -28px;
+      width: 95px;
+      height: 95px;
+      border: 18px solid rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 13px;
+    }
+    .calendar-title { display: flex; align-items: center; gap: 12px; }
+    .calendar-title h2 { margin: 0; font-size: 17px; }
+    .week-nav { display: flex; gap: 5px; }
+    .week-nav .icon-btn { width: 31px; height: 31px; border-radius: 9px; }
+    .filters {
+      display: flex;
+      gap: 5px;
+      padding: 4px;
+      border-radius: 11px;
+      background: #f2f3ef;
+      overflow-x: auto;
+    }
+    .filter {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 8px;
+      color: #89918b;
+      background: transparent;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .filter.active { color: var(--ink); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.06); font-weight: 700; }
+
+    .week {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(92px, 1fr));
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      background: #fff;
+    }
+    .day {
+      min-width: 92px;
+      padding: 13px 7px;
+      border-right: 1px solid var(--line);
+    }
+    .day:last-child { border-right: 0; }
+    .day.today { background: linear-gradient(180deg, #f3f7f4, #fff 38%); }
+    .day-head { margin-bottom: 17px; text-align: center; }
+    .day-name { color: #a0a7a2; font-size: 10px; font-weight: 750; }
+    .day-number {
+      display: grid;
+      place-items: center;
+      width: 31px;
+      height: 31px;
+      margin: 6px auto 0;
+      border-radius: 50%;
+      font-family: Georgia, serif;
+      font-size: 16px;
+    }
+    .day.today .day-number { color: white; background: var(--green); }
+    .day-events { display: grid; gap: 7px; }
+    .event {
+      min-height: 62px;
+      padding: 9px 8px;
+      border: 0;
+      border-left: 3px solid;
+      border-radius: 9px;
+      text-align: left;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .event:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(30,40,34,.09); }
+    .event-time { display: block; margin-bottom: 5px; font-size: 9px; font-weight: 750; opacity: .7; }
+    .event-title { display: block; font-size: 11px; font-weight: 750; line-height: 1.35; }
+    .event-location { display: block; margin-top: 5px; font-size: 9px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event.competition { color: #a64d28; background: #fff0e8; border-color: #e9793f; }
+    .event.sport { color: #285743; background: #e6f2eb; border-color: #4b8b6d; }
+    .event.work { color: #3d4f81; background: #eaf0ff; border-color: #6a82c5; }
+    .event.study { color: #72538a; background: #f4ecfa; border-color: #9d73b9; }
+    .event.life { color: #756226; background: #faf4da; border-color: #c5a64d; }
+
+    .rightbar {
+      padding: 34px 25px;
+      border-left: 1px solid var(--line);
+      background: #fafaf7;
+    }
+    .profile { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 42px; }
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--orange);
+      font-family: Georgia, serif;
+      font-weight: 700;
+    }
+    .profile-text { font-size: 12px; font-weight: 750; }
+    .profile-text span { display: block; margin-top: 2px; color: #9aa09b; font-size: 10px; font-weight: 500; }
+    .side-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
+    .side-title h3 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 20px; font-weight: 500; }
+    .side-title span { color: #a1a7a2; font-size: 10px; }
+    .upcoming { display: grid; gap: 9px; }
+    .upcoming-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 11px;
+      padding: 13px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .date-box {
+      padding-top: 2px;
+      border-right: 1px solid var(--line);
+      color: #8a928c;
+      font-size: 9px;
+      text-align: center;
+    }
+    .date-box strong { display: block; color: var(--ink); font-family: Georgia, serif; font-size: 21px; font-weight: 500; }
+    .upcoming-info { min-width: 0; }
+    .upcoming-type { color: var(--orange); font-size: 8px; font-weight: 800; letter-spacing: .8px; }
+    .upcoming-info h4 { margin: 5px 0 4px; overflow: hidden; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+    .upcoming-info p { margin: 0; color: #979e99; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .empty { padding: 28px 12px; color: #9da39e; font-size: 12px; text-align: center; }
+    .focus-card {
+      margin-top: 28px;
+      padding: 20px;
+      border-radius: 17px;
+      color: #fff;
+      background: #253a30;
+    }
+    .focus-card small { color: rgba(255,255,255,.55); font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+    .focus-card h4 { margin: 9px 0 8px; font-family: Georgia, "Songti SC", serif; font-size: 17px; font-weight: 500; }
+    .focus-card p { margin: 0; color: rgba(255,255,255,.6); font-size: 10px; line-height: 1.6; }
+    .progress { height: 4px; margin-top: 16px; overflow: hidden; border-radius: 3px; background: rgba(255,255,255,.12); }
+    .progress span { display: block; width: 72%; height: 100%; border-radius: inherit; background: var(--orange); }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(18, 29, 23, .45);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      visibility: hidden;
+      transition: .2s ease;
+    }
+    .modal-backdrop.open { opacity: 1; visibility: visible; }
+    .modal {
+      width: min(520px, 100%);
+      max-height: 90vh;
+      padding: 27px;
+      overflow-y: auto;
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      transform: translateY(12px);
+      transition: .2s ease;
+    }
+    .open .modal { transform: none; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 23px; }
+    .modal-head h3 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 24px; font-weight: 500; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #69736c; font-size: 11px; font-weight: 750; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      background: #fbfbf9;
+      transition: .2s;
+    }
+    .field input, .field select { height: 42px; padding: 0 12px; }
+    .field textarea { min-height: 76px; padding: 11px 12px; resize: vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #739181; box-shadow: 0 0 0 3px #edf3ef; background: #fff; }
+    .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+    .delete-btn { display: none; color: #b44c42; border-color: #efd5d2; }
+    .delete-btn.show { display: inline-flex; }
+    .right-actions { display: flex; gap: 9px; margin-left: auto; }
+    .mobile-nav { display: none; }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 30;
+      padding: 12px 17px;
+      border-radius: 11px;
+      color: #fff;
+      background: #1f362b;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s;
+    }
+    .toast.show { transform: none; opacity: 1; }
+
+    @media (max-width: 1180px) {
+      .app { grid-template-columns: 220px minmax(600px, 1fr); }
+      .rightbar { display: none; }
+    }
+    @media (max-width: 860px) {
+      .app { display: block; padding-bottom: 70px; }
+      .sidebar { display: none; }
+      .main { padding: 24px 18px 28px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat.primary { grid-column: 1 / -1; }
+      .week { grid-template-columns: repeat(7, minmax(106px, 1fr)); }
+      .mobile-nav {
+        position: fixed;
+        right: 12px;
+        bottom: 10px;
+        left: 12px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 8px 10px;
+        border: 1px solid rgba(255,255,255,.5);
+        border-radius: 17px;
+        background: rgba(255,255,255,.92);
+        box-shadow: 0 10px 30px rgba(20,30,25,.14);
+        backdrop-filter: blur(12px);
+      }
+      .mobile-nav button { border: 0; color: #8a938d; background: transparent; font-size: 10px; }
+      .mobile-add { width: 43px; height: 43px; border-radius: 13px !important; color: #fff !important; background: var(--green) !important; font-size: 23px !important; }
+    }
+    @media (max-width: 560px) {
+      .topbar { align-items: flex-start; }
+      .top-actions .icon-btn, .top-actions .ghost-btn { display: none; }
+      .primary-btn span { display: none; }
+      .stats { gap: 9px; }
+      .stat { min-height: 100px; padding: 16px; }
+      .calendar-toolbar { align-items: flex-start; flex-direction: column; }
+      .filters { width: 100%; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .modal { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+        日程
+      </div>
+      <p class="nav-label">工作台</p>
+      <nav class="nav" aria-label="主导航">
+        <button class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 2v4M16 2v4M3 9h18" stroke="currentColor" stroke-width="1.8"/></svg>
+          我的日程 <span class="nav-count" id="navCount">0</span>
+        </button>
+        <button class="nav-item" data-filter-link="competition">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" stroke="currentColor" stroke-width="1.8"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="1.8"/></svg>
+          比赛赛事
+        </button>
+        <button class="nav-item" data-filter-link="sport">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12M4 5v4M20 5v4M8 12h8M6 10v4M18 10v4M6 17h12M4 15v4M20 15v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          运动训练
+        </button>
+        <button class="nav-item" data-filter-link="work">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9 7V4h6v3M3 12h18" stroke="currentColor" stroke-width="1.8"/></svg>
+          工作学习
+        </button>
+      </nav>
+      <div class="mini-calendar">
+        <div class="mini-head"><span id="miniMonth"></span><span>今天</span></div>
+        <div class="mini-grid" id="miniGrid"></div>
+      </div>
+      <p class="quote">“不必填满每一分钟，<br>要让每一分钟都有意义。”</p>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="todayLabel">TODAY</p>
+          <h1 id="greeting">上午好，今天也从容前进。</h1>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="todayBtn" title="回到今天" aria-label="回到今天">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button class="primary-btn" id="addBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>添加日程</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="stats" aria-label="本周概览">
+        <article class="stat primary">
+          <div class="stat-label">本周安排</div>
+          <div class="stat-value"><span id="weekCount">0</span> 项</div>
+          <div class="stat-sub" id="weekHint">保持自己的节奏</div>
+          <span class="stat-decoration"></span>
+        </article>
+        <article class="stat">
+          <div class="stat-label">比赛与重要事项</div>
+          <div class="stat-value" id="importantCount">0</div>
+          <div class="stat-sub">提前准备，从容上场</div>
+        </article>
+        <article class="stat">
+          <div class="stat-label">运动训练</div>
+          <div class="stat-value"><span id="sportHours">0</span><small style="font-size:13px"> 小时</small></div>
+          <div class="stat-sub">本周累计时长</div>
+        </article>
+      </section>
+
+      <section>
+        <div class="calendar-toolbar">
+          <div class="calendar-title">
+            <h2 id="weekTitle">本周</h2>
+            <div class="week-nav">
+              <button class="icon-btn" id="prevWeek" aria-label="上一周">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <button class="icon-btn" id="nextWeek" aria-label="下一周">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="filters" aria-label="日程筛选">
+            <button class="filter active" data-filter="all">全部</button>
+            <button class="filter" data-filter="competition">比赛</button>
+            <button class="filter" data-filter="sport">运动</button>
+            <button class="filter" data-filter="work">工作</button>
+            <button class="filter" data-filter="study">学习</button>
+            <button class="filter" data-filter="life">生活</button>
+          </div>
+        </div>
+        <div class="week" id="weekGrid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <aside class="rightbar">
+      <div class="profile">
+        <div class="avatar">我</div>
+        <div class="profile-text">我的日程<span id="profileDate"></span></div>
+      </div>
+      <div class="side-title">
+        <h3>接下来</h3>
+        <span>未来 7 天</span>
+      </div>
+      <div class="upcoming" id="upcoming"></div>
+      <div class="focus-card">
+        <small>本周小目标</small>
+        <h4>专注，也给生活留白</h4>
+        <p>完成重要事项，也别忘了为休息和喜欢的事留出时间。</p>
+        <div class="progress"><span></span></div>
+      </div>
+    </aside>
+  </div>
+
+  <nav class="mobile-nav" aria-label="移动端导航">
+    <button>本周</button>
+    <button>比赛</button>
+    <button class="mobile-add" id="mobileAdd" aria-label="添加日程">+</button>
+    <button>训练</button>
+    <button>更多</button>
+  </nav>
+
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">添加新日程</h3>
+        <button class="icon-btn" id="closeModal" aria-label="关闭">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <form id="eventForm">
+        <input type="hidden" id="eventId">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="eventTitle">日程名称</label>
+            <input id="eventTitle" required maxlength="40" placeholder="例如：项目汇报 / 城市半程马拉松">
+          </div>
+          <div class="field">
+            <label for="eventType">日程类型</label>
+            <select id="eventType">
+              <option value="competition">比赛赛事</option>
+              <option value="sport">运动训练</option>
+              <option value="work">工作</option>
+              <option value="study">学习</option>
+              <option value="life">生活</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="eventDate">日期</label>
+            <input id="eventDate" type="date" required>
+          </div>
+          <div class="field">
+            <label for="startTime">开始时间</label>
+            <input id="startTime" type="time" required>
+          </div>
+          <div class="field">
+            <label for="endTime">结束时间</label>
+            <input id="endTime" type="time" required>
+          </div>
+          <div class="field full">
+            <label for="eventLocation">地点</label>
+            <input id="eventLocation" maxlength="40" placeholder="线上或具体地点">
+          </div>
+          <div class="field full">
+            <label for="eventNote">备注</label>
+            <textarea id="eventNote" maxlength="160" placeholder="准备事项、目标或其他提醒"></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn delete-btn" id="deleteBtn">删除日程</button>
+          <div class="right-actions">
+            <button type="button" class="ghost-btn" id="cancelBtn">取消</button>
+            <button type="submit" class="primary-btn">保存日程</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "my-schedule-events-v1";
+      const typeNames = { competition: "比赛", sport: "运动", work: "工作", study: "学习", life: "生活" };
+      const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+      const pad = n => String(n).padStart(2, "0");
+      const toDateKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const parseDate = value => {
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      };
+      const addDays = (date, days) => {
+        const next = new Date(date);
+        next.setDate(next.getDate() + days);
+        return next;
+      };
+      const startOfWeek = date => {
+        const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const day = next.getDay() || 7;
+        next.setDate(next.getDate() - day + 1);
+        return next;
+      };
+      const esc = value => String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[char]));
+
+      const makeSamples = () => {
+        const monday = startOfWeek(new Date());
+        return [
+          { id: crypto.randomUUID(), title: "晨间跑步", type: "sport", date: toDateKey(addDays(monday, 0)), start: "07:00", end: "08:00", location: "滨河公园", note: "轻松跑 6 公里" },
+          { id: crypto.randomUUID(), title: "项目周会", type: "work", date: toDateKey(addDays(monday, 1)), start: "10:00", end: "11:00", location: "第三会议室", note: "同步本周关键进展" },
+          { id: crypto.randomUUID(), title: "英语学习", type: "study", date: toDateKey(addDays(monday, 2)), start: "19:30", end: "21:00", location: "家", note: "口语练习与阅读" },
+          { id: crypto.randomUUID(), title: "力量训练", type: "sport", date: toDateKey(addDays(monday, 3)), start: "18:30", end: "20:00", location: "健身房", note: "下肢与核心" },
+          { id: crypto.randomUUID(), title: "朋友晚餐", type: "life", date: toDateKey(addDays(monday, 4)), start: "19:00", end: "21:00", location: "云里餐厅", note: "" },
+          { id: crypto.randomUUID(), title: "城市羽毛球赛", type: "competition", date: toDateKey(addDays(monday, 5)), start: "09:00", end: "12:00", location: "市体育中心", note: "提前 40 分钟签到热身" },
+          { id: crypto.randomUUID(), title: "周末复盘", type: "study", date: toDateKey(addDays(monday, 6)), start: "20:00", end: "20:40", location: "家", note: "整理下周目标" }
+        ];
+      };
+
+      let events;
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        events = Array.isArray(saved) ? saved : makeSamples();
+      } catch { events = makeSamples(); }
+      let currentWeek = startOfWeek(new Date());
+      let activeFilter = "all";
+
+      const el = id => document.getElementById(id);
+      const modal = el("modal");
+
+      function save() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      }
+
+      function renderMiniCalendar() {
+        const now = new Date();
+        el("miniMonth").textContent = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
+        const first = new Date(now.getFullYear(), now.getMonth(), 1);
+        const offset = (first.getDay() + 6) % 7;
+        const start = addDays(first, -offset);
+        const labels = ["一", "二", "三", "四", "五", "六", "日"].map(d => `<span class="dow">${d}</span>`);
+        for (let i = 0; i < 35; i++) {
+          const date = addDays(start, i);
+          const classes = [
+            date.getMonth() !== now.getMonth() ? "muted-day" : "",
+            toDateKey(date) === toDateKey(now) ? "today" : ""
+          ].filter(Boolean).join(" ");
+          labels.push(`<span class="${classes}">${date.getDate()}</span>`);
+        }
+        el("miniGrid").innerHTML = labels.join("");
+      }
+
+      function renderHeader() {
+        const now = new Date();
+        const hour = now.getHours();
+        const greeting = hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好";
+        el("greeting").textContent = `${greeting}，今天也从容前进。`;
+        el("todayLabel").textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${["周日","周一","周二","周三","周四","周五","周六"][now.getDay()]}`;
+        el("profileDate").textContent = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+      }
+
+      function filteredEvents() {
+        return activeFilter === "all" ? events : events.filter(event => event.type === activeFilter);
+      }
+
+      function renderWeek() {
+        const weekEnd = addDays(currentWeek, 6);
+        el("weekTitle").textContent = `${currentWeek.getMonth() + 1}月${currentWeek.getDate()}日 — ${weekEnd.getMonth() + 1}月${weekEnd.getDate()}日`;
+        const todayKey = toDateKey(new Date());
+        const visible = filteredEvents();
+        el("weekGrid").innerHTML = Array.from({ length: 7 }, (_, index) => {
+          const date = addDays(currentWeek, index);
+          const key = toDateKey(date);
+          const dayEvents = visible.filter(event => event.date === key).sort((a, b) => a.start.localeCompare(b.start));
+          return `<div class="day ${key === todayKey ? "today" : ""}">
+            <div class="day-head">
+              <div class="day-name">${weekdays[index]}</div>
+              <div class="day-number">${date.getDate()}</div>
+            </div>
+            <div class="day-events">${dayEvents.map(event => `
+              <button class="event ${event.type}" data-id="${event.id}" title="点击查看或编辑">
+                <span class="event-time">${esc(event.start)}–${esc(event.end)}</span>
+                <span class="event-title">${esc(event.title)}</span>
+                ${event.location ? `<span class="event-location">⌖ ${esc(event.location)}</span>` : ""}
+              </button>`).join("")}</div>
+          </div>`;
+        }).join("");
+
+        document.querySelectorAll(".event").forEach(button => {
+          button.addEventListener("click", () => openModal(events.find(item => item.id === button.dataset.id)));
+        });
+        renderStats();
+      }
+
+      function renderStats() {
+        const start = toDateKey(currentWeek);
+        const end = toDateKey(addDays(currentWeek, 6));
+        const weekEvents = events.filter(event => event.date >= start && event.date <= end);
+        const important = weekEvents.filter(event => event.type === "competition").length;
+        const sportMinutes = weekEvents.filter(event => event.type === "sport").reduce((sum, event) => {
+          const [sh, sm] = event.start.split(":").map(Number);
+          const [eh, em] = event.end.split(":").map(Number);
+          return sum + Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+        }, 0);
+        el("weekCount").textContent = weekEvents.length;
+        el("importantCount").textContent = important;
+        el("sportHours").textContent = (sportMinutes / 60).toFixed(sportMinutes % 60 ? 1 : 0);
+        el("weekHint").textContent = weekEvents.length > 7 ? "忙碌的一周，记得留出休息时间" : "张弛有度，保持自己的节奏";
+        el("navCount").textContent = events.length;
+      }
+
+      function renderUpcoming() {
+        const today = toDateKey(new Date());
+        const lastDay = toDateKey(addDays(new Date(), 7));
+        const next = events
+          .filter(event => event.date >= today && event.date <= lastDay)
+          .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))
+          .slice(0, 5);
+        el("upcoming").innerHTML = next.length ? next.map(event => {
+          const date = parseDate(event.date);
+          return `<article class="upcoming-card">
+            <div class="date-box">${date.getMonth() + 1}月<strong>${date.getDate()}</strong></div>
+            <div class="upcoming-info">
+              <div class="upcoming-type">${typeNames[event.type]}</div>
+              <h4>${esc(event.title)}</h4>
+              <p>${esc(event.start)} · ${esc(event.location || "地点待定")}</p>
+            </div>
+          </article>`;
+        }).join("") : `<div class="empty">未来 7 天暂无安排<br>给自己留一点自由时间吧</div>`;
+      }
+
+      function renderAll() {
+        renderWeek();
+        renderUpcoming();
+      }
+
+      function setFilter(filter) {
+        activeFilter = filter;
+        document.querySelectorAll(".filter").forEach(button => button.classList.toggle("active", button.dataset.filter === filter));
+        renderWeek();
+      }
+
+      function openModal(event = null, presetDate = null) {
+        el("eventForm").reset();
+        el("eventId").value = event?.id || "";
+        el("modalTitle").textContent = event ? "编辑日程" : "添加新日程";
+        el("deleteBtn").classList.toggle("show", Boolean(event));
+        if (event) {
+          el("eventTitle").value = event.title;
+          el("eventType").value = event.type;
+          el("eventDate").value = event.date;
+          el("startTime").value = event.start;
+          el("endTime").value = event.end;
+          el("eventLocation").value = event.location || "";
+          el("eventNote").value = event.note || "";
+        } else {
+          el("eventDate").value = presetDate || toDateKey(new Date());
+          el("startTime").value = "09:00";
+          el("endTime").value = "10:00";
+        }
+        modal.classList.add("open");
+        setTimeout(() => el("eventTitle").focus(), 100);
+      }
+
+      function closeModal() {
+        modal.classList.remove("open");
+      }
+
+      let toastTimer;
+      function toast(message) {
+        el("toast").textContent = message;
+        el("toast").classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el("toast").classList.remove("show"), 2200);
+      }
+
+      el("eventForm").addEventListener("submit", event => {
+        event.preventDefault();
+        const start = el("startTime").value;
+        const end = el("endTime").value;
+        if (end <= start) {
+          toast("结束时间需要晚于开始时间");
+          return;
+        }
+        const data = {
+          id: el("eventId").value || crypto.randomUUID(),
+          title: el("eventTitle").value.trim(),
+          type: el("eventType").value,
+          date: el("eventDate").value,
+          start,
+          end,
+          location: el("eventLocation").value.trim(),
+          note: el("eventNote").value.trim()
+        };
+        const index = events.findIndex(item => item.id === data.id);
+        if (index >= 0) events[index] = data;
+        else events.push(data);
+        save();
+        closeModal();
+        currentWeek = startOfWeek(parseDate(data.date));
+        renderAll();
+        toast(index >= 0 ? "日程已更新" : "日程已添加");
+      });
+
+      el("deleteBtn").addEventListener("click", () => {
+        const id = el("eventId").value;
+        if (!id || !confirm("确定删除这项日程吗？")) return;
+        events = events.filter(event => event.id !== id);
+        save();
+        closeModal();
+        renderAll();
+        toast("日程已删除");
+      });
+
+      el("addBtn").addEventListener("click", () => openModal());
+      el("mobileAdd").addEventListener("click", () => openModal());
+      el("closeModal").addEventListener("click", closeModal);
+      el("cancelBtn").addEventListener("click", closeModal);
+      modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
+      document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+      el("prevWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, -7); renderWeek(); });
+      el("nextWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, 7); renderWeek(); });
+      el("todayBtn").addEventListener("click", () => { currentWeek = startOfWeek(new Date()); renderWeek(); });
+      document.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filter)));
+      document.querySelectorAll("[data-filter-link]").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filterLink)));
+
+      renderHeader();
+      renderMiniCalendar();
+      renderAll();
+      if (!localStorage.getItem(STORAGE_KEY)) save();
+    })();
+  </script>
+</body>
+</html>

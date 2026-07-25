@@ -260,7 +260,7 @@
       return this.cloud.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: window.location.href.split("#")[0].split("?")[0] }
+        options: { emailRedirectTo: window.location.href.split("#")[0] }
       });
     }
 

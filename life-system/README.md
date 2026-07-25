@@ -16,12 +16,17 @@
 
 直接打开 `life-system/index.html`。首次进入会显示示例数据，并自动读取旧版浏览器中的日程数据。
 
+在线预览：
+
+<https://htmlpreview.github.io/?https://github.com/wjy11260105/Wangjingyi/blob/cursor/schedule-manager-page-5167/life-system/index.html>
+
 ## 启用云端同步
 
 1. 在 Supabase Dashboard 打开 SQL Editor
 2. 完整执行根目录的 `supabase-life-system.sql`
-3. 打开新版网页，使用原有 Supabase 邮箱账号登录
-4. 在手机与电脑登录同一账号
+3. 在 Authentication → URL Configuration 的 Redirect URLs 中加入 `https://htmlpreview.github.io/**`
+4. 打开新版网页，使用原有 Supabase 邮箱账号登录
+5. 在手机与电脑登录同一账号
 
 同步采用本地优先策略。每条记录包含 `updated_at`，手机和电脑会保留时间较新的版本；网络失败时，本地记录不会丢失。
 

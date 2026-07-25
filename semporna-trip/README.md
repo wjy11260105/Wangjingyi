@@ -15,7 +15,7 @@
 
 ## 在线预览
 
-<https://htmlpreview.github.io/?https://github.com/wjy11260105/Wangjingyi/blob/cursor/schedule-manager-page-5167/semporna-trip/index.html>
+<https://htmlpreview.github.io/?https://github.com/wjy11260105/Wangjingyi/blob/262fea6/semporna-trip/index.html>
 
 ## 开启云端同步
 

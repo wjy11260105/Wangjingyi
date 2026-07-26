@@ -27,6 +27,56 @@
     done: { label: "已完成", color: "#a64d28", bg: "#fff0e8" },
     paused: { label: "已暂停", color: "#7d7680", bg: "#efedf0" }
   };
+  const CODE_LANGUAGES = {
+    python: "Python",
+    sql: "SQL",
+    javascript: "JavaScript",
+    shell: "Shell",
+    json: "JSON",
+    text: "纯文本"
+  };
+
+  function renderLearningText(value) {
+    const text = String(value || "");
+    const pattern = /```([^\n`]*)\n([\s\S]*?)```/g;
+    let cursor = 0;
+    let html = "";
+    let match;
+    while ((match = pattern.exec(text))) {
+      const before = text.slice(cursor, match.index);
+      if (before) html += `<span>${esc(before).replace(/\n/g, "<br>")}</span>`;
+      const language = match[1].trim().toLowerCase() || "text";
+      const label = CODE_LANGUAGES[language] || match[1].trim() || "代码";
+      html += `<pre class="learning-code"><small>${esc(label)}</small><code>${esc(match[2].replace(/\n$/, ""))}</code></pre>`;
+      cursor = pattern.lastIndex;
+    }
+    const rest = text.slice(cursor);
+    if (rest) html += `<span>${esc(rest).replace(/\n/g, "<br>")}</span>`;
+    return html || "";
+  }
+
+  function insertCodeBlock(textarea, language) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.slice(start, end);
+    const prefix = start > 0 && textarea.value[start - 1] !== "\n" ? "\n" : "";
+    const block = `${prefix}\`\`\`${language}\n${selected || ""}\n\`\`\`\n`;
+    textarea.setRangeText(block, start, end, "end");
+    const codeStart = start + prefix.length + language.length + 4;
+    if (!selected) textarea.setSelectionRange(codeStart, codeStart);
+    textarea.focus();
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function codeToolbar(prefix) {
+    return `<div class="code-toolbar">
+      <select id="${prefix}CodeLanguage" aria-label="代码语言">
+        ${Object.entries(CODE_LANGUAGES).map(([key, label]) => `<option value="${key}">${label}</option>`).join("")}
+      </select>
+      <button type="button" class="ghost-btn small" id="${prefix}InsertCode">‹/› 插入代码块</button>
+      <span>使用三个反引号保存代码</span>
+    </div>`;
+  }
 
   const requiredLearningItems = () => ([
     {
@@ -198,6 +248,7 @@
           <div><strong>直接记录</strong><small>不必先整理，先把当下的学习、收获和感受写下来</small></div>
           <span id="learningQuickStatus">${quickEntry ? "已自动保存" : "输入后自动保存"}</span>
         </div>
+        ${codeToolbar("quick")}
         <textarea id="learningQuickText" maxlength="5000" placeholder="直接在这里开始写…">${esc(quickEntry?.content || "")}</textarea>
       </section>
       <section>
@@ -207,7 +258,7 @@
             <button class="learning-doc" data-entry-id="${entry.id}">
               <span class="learning-doc-date">${entry.date ? fmtCN(entry.date) : "日期未记录"}</span>
               <strong>${esc(entry.chapter || "学习记录")}</strong>
-              ${entry.content ? `<p>${esc(entry.content)}</p>` : ""}
+              ${entry.content ? `<div class="learning-rich-text">${renderLearningText(entry.content)}</div>` : ""}
               <span class="learning-doc-tags">
                 ${entry.gain ? "<i>收获</i>" : ""}
                 ${entry.feeling ? "<i>感受</i>" : ""}
@@ -227,6 +278,9 @@
     document.getElementById("addLearningEntry").addEventListener("click", () => openLearningEntryEditor(item));
     const quickText = document.getElementById("learningQuickText");
     const quickStatus = document.getElementById("learningQuickStatus");
+    document.getElementById("quickInsertCode").addEventListener("click", () => {
+      insertCodeBlock(quickText, document.getElementById("quickCodeLanguage").value);
+    });
     let quickSaveTimer;
     const saveQuickText = () => {
       clearTimeout(quickSaveTimer);
@@ -361,6 +415,7 @@
         </div>
         <div class="field full">
           <label for="entryContent">学习内容与原始笔记</label>
+          ${codeToolbar("entry")}
           <textarea id="entryContent" maxlength="2000" placeholder="这次学习了什么？">${esc(entry?.content || "")}</textarea>
         </div>
         <div class="field full">
@@ -412,6 +467,9 @@
         App.refresh();
         toast("学习记录已删除");
       } : null
+    });
+    document.getElementById("entryInsertCode").addEventListener("click", () => {
+      insertCodeBlock(Modal.field("entryContent"), Modal.value("entryCodeLanguage"));
     });
   }
 

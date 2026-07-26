@@ -24,6 +24,7 @@
   let state = user ? "idle" : "signed-out";
   let debounceTimer = null;
   let pendingUpload = false;
+  let localDirtyAt = 0;
   let syncing = false;
   let initialized = false;
 
@@ -38,6 +39,24 @@
 
   function writeJSON(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function readMeta() {
+    return readJSON(SYNC_META_KEY, {}) || {};
+  }
+
+  function writeMeta(patch) {
+    writeJSON(SYNC_META_KEY, { ...readMeta(), ...patch });
+  }
+
+  function hasLocalData() {
+    return DATA_KEYS.some(key => {
+      const value = readJSON(key, null);
+      if (value == null) return false;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "object") return Object.keys(value).length > 0;
+      return true;
+    });
   }
 
   function setState(next, message = "") {
@@ -157,9 +176,28 @@
     return Array.isArray(rows) && rows.length ? rows[0] : null;
   }
 
+  function markDirty() {
+    pendingUpload = true;
+    localDirtyAt = Date.now();
+    writeMeta({ dirtyAt: localDirtyAt });
+  }
+
+  function flushPendingUpload() {
+    if (!pendingUpload || !user) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      upload().catch(() => {});
+    }, 120);
+  }
+
   async function upload() {
-    if (!user || syncing) return;
+    if (!user) return;
+    if (syncing) {
+      pendingUpload = true;
+      return;
+    }
     syncing = true;
+    const dirtyAtAtStart = localDirtyAt;
     pendingUpload = false;
     setState("syncing");
     try {
@@ -173,7 +211,15 @@
         })
       });
       const updatedAt = rows?.[0]?.updated_at || new Date().toISOString();
-      writeJSON(SYNC_META_KEY, { updatedAt });
+      const newerLocalWrite = localDirtyAt > dirtyAtAtStart;
+      if (newerLocalWrite) {
+        pendingUpload = true;
+        writeMeta({ updatedAt, dirtyAt: localDirtyAt });
+      } else {
+        localDirtyAt = 0;
+        pendingUpload = false;
+        writeMeta({ updatedAt, dirtyAt: 0 });
+      }
       setState("synced");
       setTimeout(() => { if (state === "synced") setState("idle"); }, 1800);
     } catch (error) {
@@ -182,30 +228,81 @@
       toast(error.message);
     } finally {
       syncing = false;
-      if (pendingUpload && state !== "error") schedule();
+      if (pendingUpload) flushPendingUpload();
     }
   }
 
   async function pull({ initial = false, force = false } = {}) {
     if (!user || syncing) return;
     syncing = true;
+    const startedAt = Date.now();
     setState("syncing");
     try {
+      /* 本地有未上传改动时，优先上传，避免用旧云端覆盖刚保存的数据。 */
+      if (pendingUpload || localDirtyAt > 0) {
+        syncing = false;
+        await upload();
+        if (!force) return;
+        if (syncing) return;
+        syncing = true;
+      }
+
       const cloud = await fetchCloud();
+
+      /* 拉取过程中本地又有写入：绝不能 apply 旧快照。 */
+      if (pendingUpload || localDirtyAt > startedAt) {
+        syncing = false;
+        await upload();
+        return;
+      }
+
       if (!cloud) {
         syncing = false;
         await upload();
         return;
       }
-      const localMeta = readJSON(SYNC_META_KEY, {});
+
+      const localMeta = readMeta();
       const cloudTime = new Date(cloud.updated_at).getTime();
       const localTime = new Date(localMeta.updatedAt || 0).getTime();
-      if (initial || force || cloudTime > localTime) {
-        applySnapshot(cloud.payload);
-        writeJSON(SYNC_META_KEY, { updatedAt: cloud.updated_at });
-        App.refresh();
+      const dirtyAt = Number(localMeta.dirtyAt || localDirtyAt || 0);
+
+      if (dirtyAt && dirtyAt >= cloudTime) {
+        syncing = false;
+        await upload();
+        return;
       }
-      pendingUpload = false;
+
+      /*
+       * 本机从未成功同步过，但已有本地数据：优先上传本机，
+       * 避免登录瞬间用云端旧快照抹掉刚录入的内容。
+       */
+      const neverSyncedHere = !localMeta.updatedAt;
+      if (neverSyncedHere && hasLocalData() && !force) {
+        syncing = false;
+        await upload();
+        return;
+      }
+
+      const shouldApply = force || cloudTime > localTime || (initial && cloudTime >= localTime && !dirtyAt);
+      if (shouldApply && cloudTime >= localTime) {
+        /* 再次确认：apply 前本地未变脏。 */
+        if (pendingUpload || localDirtyAt > startedAt) {
+          syncing = false;
+          await upload();
+          return;
+        }
+        applySnapshot(cloud.payload);
+        localDirtyAt = 0;
+        pendingUpload = false;
+        writeMeta({ updatedAt: cloud.updated_at, dirtyAt: 0 });
+        App.refresh();
+      } else if (localTime > cloudTime || dirtyAt) {
+        syncing = false;
+        await upload();
+        return;
+      }
+
       setState("synced");
       setTimeout(() => { if (state === "synced") setState("idle"); }, 1800);
     } catch (error) {
@@ -213,14 +310,18 @@
       toast(error.message);
     } finally {
       syncing = false;
+      if (pendingUpload) flushPendingUpload();
     }
   }
 
   function schedule(changedKey) {
-    if (!user || (changedKey && !DATA_KEYS.includes(changedKey))) return;
-    pendingUpload = true;
+    if (changedKey && !DATA_KEYS.includes(changedKey)) return;
+    markDirty();
+    if (!user) return;
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(upload, 900);
+    debounceTimer = setTimeout(() => {
+      upload().catch(() => {});
+    }, 900);
   }
 
   async function signIn(email, password) {
@@ -248,9 +349,10 @@
     session = null;
     user = null;
     pendingUpload = false;
+    localDirtyAt = 0;
     clearTimeout(debounceTimer);
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SYNC_META_KEY);
+    /* 保留 SYNC_META，避免误判本机数据时间；退出不清除业务数据。 */
     setState("signed-out");
   }
 
@@ -334,7 +436,7 @@
   }
 
   function accountModal() {
-    const meta = readJSON(SYNC_META_KEY, {});
+    const meta = readMeta();
     Modal.open({
       title: "云同步",
       submitText: "立即同步",
@@ -357,9 +459,15 @@
         const button = document.getElementById("modalSubmit");
         button.disabled = true;
         button.textContent = "同步中…";
-        await pull({ force: true });
-        Modal.close();
-        toast("已同步最新云端数据");
+        try {
+          await pull({ force: true });
+          Modal.close();
+          toast("已同步最新数据");
+        } catch (error) {
+          button.disabled = false;
+          button.textContent = "立即同步";
+          toast(error.message || "同步失败");
+        }
       }
     });
     document.getElementById("syncSignout").addEventListener("click", signOut);
@@ -379,6 +487,11 @@
     try {
       await validToken();
       user = session.user;
+      const meta = readMeta();
+      if (meta.dirtyAt) {
+        pendingUpload = true;
+        localDirtyAt = Number(meta.dirtyAt) || Date.now();
+      }
       setState("idle");
       await pull({ initial: true });
     } catch {
@@ -393,10 +506,10 @@
       button.addEventListener("click", open);
     });
     window.addEventListener("focus", () => {
-      if (user && !pendingUpload) pull();
+      if (user && !pendingUpload && !syncing) pull();
     });
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && user && !pendingUpload) pull();
+      if (document.visibilityState === "visible" && user && !pendingUpload && !syncing) pull();
     });
     restore();
   }

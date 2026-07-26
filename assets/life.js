@@ -177,6 +177,8 @@
     const type = LEARNING_TYPES[item.type] || LEARNING_TYPES.practice;
     const status = LEARNING_STATUS[item.status];
     const entries = (item.entries || []).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const todayKey = toDateKey(new Date());
+    const quickEntry = item.entries.find(entry => entry.quick && entry.date === todayKey);
     root.innerHTML = `
       <header class="topbar learning-detail-head">
         <div>
@@ -191,6 +193,13 @@
         </div>
       </header>
       ${item.goal ? `<section class="learning-goal"><small>学习目标</small><p>${esc(item.goal)}</p></section>` : ""}
+      <section class="learning-quick-editor">
+        <div class="learning-quick-head">
+          <div><strong>直接记录</strong><small>不必先整理，先把当下的学习、收获和感受写下来</small></div>
+          <span id="learningQuickStatus">${quickEntry ? "已自动保存" : "输入后自动保存"}</span>
+        </div>
+        <textarea id="learningQuickText" maxlength="5000" placeholder="直接在这里开始写…">${esc(quickEntry?.content || "")}</textarea>
+      </section>
       <section>
         <div class="panel-head"><h3>学习文档</h3><span class="hint">${entries.length} 篇记录</span></div>
         <div class="learning-docs">
@@ -216,6 +225,40 @@
     });
     document.getElementById("editLearning").addEventListener("click", () => openLearningEditor(item));
     document.getElementById("addLearningEntry").addEventListener("click", () => openLearningEntryEditor(item));
+    const quickText = document.getElementById("learningQuickText");
+    const quickStatus = document.getElementById("learningQuickStatus");
+    let quickSaveTimer;
+    const saveQuickText = () => {
+      clearTimeout(quickSaveTimer);
+      const content = quickText.value.trim();
+      const index = item.entries.findIndex(entry => entry.quick && entry.date === todayKey);
+      if (content) {
+        const data = {
+          id: index >= 0 ? item.entries[index].id : uuid(),
+          date: todayKey,
+          chapter: "今日学习随记",
+          content,
+          gain: "",
+          feeling: "",
+          question: "",
+          practice: "",
+          output: "",
+          quick: true
+        };
+        if (index >= 0) item.entries[index] = data;
+        else item.entries.unshift(data);
+      } else if (index >= 0) {
+        item.entries.splice(index, 1);
+      }
+      saveBooks();
+      quickStatus.textContent = "已自动保存";
+    };
+    quickText.addEventListener("input", () => {
+      quickStatus.textContent = "保存中…";
+      clearTimeout(quickSaveTimer);
+      quickSaveTimer = setTimeout(saveQuickText, 650);
+    });
+    quickText.addEventListener("blur", saveQuickText);
     root.querySelectorAll("[data-entry-id]").forEach(button => button.addEventListener("click", () => {
       openLearningEntryEditor(item, item.entries.find(entry => entry.id === button.dataset.entryId));
     }));

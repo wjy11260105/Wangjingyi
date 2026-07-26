@@ -690,6 +690,39 @@ h2.block-title {
 }
 .learning-goal small { color: #799184; font-size: 9px; font-weight: 800; letter-spacing: .8px; }
 .learning-goal p { margin: 5px 0 0; font-size: 12px; line-height: 1.6; }
+.learning-quick-editor {
+  margin-bottom: 22px;
+  padding: 16px 17px;
+  border: 1px solid #dce4dd;
+  border-radius: 15px;
+  background: #fbfcfa;
+}
+.learning-quick-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.learning-quick-head > div { display: grid; gap: 3px; }
+.learning-quick-head strong { font-size: 13px; }
+.learning-quick-head small { color: #969e98; font-size: 9px; }
+.learning-quick-head > span { color: #7f9588; font-size: 9px; white-space: nowrap; }
+.learning-quick-editor textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 11px;
+  outline: none;
+  color: var(--ink);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font: 12px/1.75 Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  resize: vertical;
+  transition: .2s;
+}
+.learning-quick-editor textarea:focus { box-shadow: inset 0 0 0 1px #769080, 0 0 0 3px #edf3ef; }
 .learning-docs { display: grid; gap: 10px; }
 .learning-doc {
   display: grid;

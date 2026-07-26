@@ -478,7 +478,7 @@
       body: `
         <div class="field full">
           <label for="accountPlatform">平台名称</label>
-          <input id="accountPlatform" required maxlength="80" placeholder="例如：某学习平台" value="${esc(account?.platform || "")}">
+          <input id="accountPlatform" maxlength="80" placeholder="必填，例如：某学习平台" value="${esc(account?.platform || "")}">
         </div>
         <div class="field">
           <label for="accountUsername">账户名</label>
@@ -486,7 +486,7 @@
         </div>
         <div class="field">
           <label for="accountEmail">绑定邮箱</label>
-          <input id="accountEmail" type="email" maxlength="120" autocomplete="off" value="${esc(account?.email || "")}">
+          <input id="accountEmail" type="text" inputmode="email" maxlength="120" autocomplete="off" placeholder="可选，不限制格式" value="${esc(account?.email || "")}">
         </div>
         <div class="field full">
           <label for="accountPassword">密码（加密保存）</label>
@@ -509,6 +509,12 @@
         </div>
       `,
       async onSubmit() {
+        const platform = Modal.value("accountPlatform");
+        if (!platform) {
+          toast("请填写平台名称");
+          Modal.field("accountPlatform").focus();
+          return;
+        }
         const submit = document.getElementById("modalSubmit");
         submit.disabled = true;
         submit.textContent = "加密保存中…";
@@ -516,7 +522,7 @@
           const encryptedPassword = await encryptSecret(Modal.field("accountPassword").value);
           const data = {
             id: account?.id || uuid(),
-            platform: Modal.value("accountPlatform"),
+            platform,
             username: Modal.value("accountUsername"),
             email: Modal.value("accountEmail"),
             password: encryptedPassword,

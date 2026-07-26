@@ -1,6 +1,6 @@
 /* 个人命盘空间：固定展示用户八字、紫微基础盘与人生事件记录。 */
 (() => {
-  const { esc, uuid } = U;
+  const { esc, uuid, addDays } = U;
   const EVENTS_KEY = "life-mystic-events-v1";
 
   const PROFILE = {
@@ -42,6 +42,32 @@
     home: "生活",
     other: "其他"
   };
+
+  function flowMonthsForYear(year) {
+    return Array.from({ length: 12 }, (_, index) => {
+      // 寅月从当年 2 月立春开始，丑月从次年 1 月小寒开始。
+      const startYear = index === 11 ? year + 1 : year;
+      const startMonth = index === 11 ? 1 : index + 2;
+      const nextYear = index >= 10 ? year + 1 : year;
+      const nextMonth = index === 10 ? 1 : index === 11 ? 2 : index + 3;
+      const start = new Date(startYear, startMonth - 1, Lunar.jieDay(startYear, startMonth));
+      const next = new Date(nextYear, nextMonth - 1, Lunar.jieDay(nextYear, nextMonth));
+      const sample = addDays(start, 8);
+      const chart = Lunar.bazi(sample.getFullYear(), sample.getMonth() + 1, sample.getDate(), 12);
+      return {
+        index,
+        yearName: `${chart.pillars[0].gan}${chart.pillars[0].zhi}`,
+        name: `${chart.pillars[1].gan}${chart.pillars[1].zhi}`,
+        range: `${start.getMonth() + 1}月${start.getDate()}日—${addDays(next, -1).getMonth() + 1}月${addDays(next, -1).getDate()}日`
+      };
+    });
+  }
+
+  function eventFlowIndex(event) {
+    if (Number.isInteger(event.flowMonthIndex)) return event.flowMonthIndex;
+    // 兼容旧记录：原公历月份映射为该月主要流月。
+    return event.month ? (Number(event.month) - 2 + 12) % 12 : -1;
+  }
 
   function loadEvents() {
     const saved = Store.get(EVENTS_KEY, []);
@@ -199,31 +225,36 @@
 
   function renderTimeline() {
     const sorted = events.slice().sort((a, b) =>
-      Number(b.year) - Number(a.year) || Number(b.month) - Number(a.month)
+      Number(b.year) - Number(a.year) || eventFlowIndex(b) - eventFlowIndex(a)
     );
+    const eventHTML = event => {
+      const flow = flowMonthsForYear(Number(event.year))[eventFlowIndex(event)];
+      return `
+        <button class="life-event" data-event-id="${event.id}">
+          <span class="life-event-date">
+            <b>${event.year}</b>
+            <small>${flow ? `${flow.name}月` : "全年"}</small>
+            ${flow ? `<em>${flow.range}</em>` : ""}
+          </span>
+          <span class="life-event-body">
+            <span class="badge">${EVENT_TYPES[event.type] || EVENT_TYPES.other}</span>
+            <strong>${esc(event.title)}</strong>
+            ${event.detail ? `<p>${esc(event.detail)}</p>` : ""}
+          </span>
+          <span class="life-event-edit">编辑</span>
+        </button>`;
+    };
     return `
       <section class="panel mystic-timeline-panel">
         <div class="panel-head">
           <div>
             <h3>人生事件记录</h3>
-            <span class="hint">按年份和月份记录真实发生的事情，供后续复盘</span>
+            <span class="hint">按流年与流月记录真实发生的事情，供后续复盘</span>
           </div>
           <button class="primary-btn" id="addMysticEvent">＋ <span class="btn-text">记录事件</span></button>
         </div>
         <div class="life-timeline">
-          ${sorted.length ? sorted.map(event => `
-            <button class="life-event" data-event-id="${event.id}">
-              <span class="life-event-date">
-                <b>${event.year}</b>
-                <small>${event.month ? `${event.month}月` : "全年"}</small>
-              </span>
-              <span class="life-event-body">
-                <span class="badge">${EVENT_TYPES[event.type] || EVENT_TYPES.other}</span>
-                <strong>${esc(event.title)}</strong>
-                ${event.detail ? `<p>${esc(event.detail)}</p>` : ""}
-              </span>
-              <span class="life-event-edit">编辑</span>
-            </button>`).join("") : `
+          ${sorted.length ? sorted.map(eventHTML).join("") : `
             <div class="empty">
               还没有人生事件记录<br>
               可以从毕业、工作变化、旅行、关系、健康或重要学习经历开始
@@ -235,21 +266,24 @@
 
   function openEventEditor(item = null) {
     const currentYear = new Date().getFullYear();
+    const selectedYear = Number(item?.year) || currentYear;
+    const selectedFlowIndex = eventFlowIndex(item || {});
+    const flowOptions = year => `
+      <option value="-1" ${selectedFlowIndex < 0 ? "selected" : ""}>不确定 / 全年</option>
+      ${flowMonthsForYear(year).map(flow =>
+        `<option value="${flow.index}" ${selectedFlowIndex === flow.index ? "selected" : ""}>${flow.name}月（${flow.range}）</option>`
+      ).join("")}
+    `;
     Modal.open({
       title: item ? "编辑人生事件" : "记录人生事件",
       body: `
         <div class="field">
           <label for="lifeEventYear">年份</label>
-          <input id="lifeEventYear" type="number" min="1900" max="2100" required value="${item?.year || currentYear}">
+          <input id="lifeEventYear" type="number" min="1900" max="2100" required value="${selectedYear}">
         </div>
         <div class="field">
-          <label for="lifeEventMonth">月份</label>
-          <select id="lifeEventMonth">
-            <option value="0" ${!item?.month ? "selected" : ""}>不确定 / 全年</option>
-            ${Array.from({ length: 12 }, (_, index) => index + 1).map(month =>
-              `<option value="${month}" ${Number(item?.month) === month ? "selected" : ""}>${month} 月</option>`
-            ).join("")}
-          </select>
+          <label for="lifeEventFlowMonth">流月</label>
+          <select id="lifeEventFlowMonth">${flowOptions(selectedYear)}</select>
         </div>
         <div class="field">
           <label for="lifeEventType">类型</label>
@@ -272,7 +306,7 @@
         const data = {
           id: item?.id || uuid(),
           year: Number(Modal.value("lifeEventYear")),
-          month: Number(Modal.value("lifeEventMonth")),
+          flowMonthIndex: Number(Modal.value("lifeEventFlowMonth")),
           type: Modal.value("lifeEventType"),
           title: Modal.value("lifeEventTitle"),
           detail: Modal.value("lifeEventDetail")
@@ -293,6 +327,16 @@
         App.refresh();
         toast("人生事件已删除");
       } : null
+    });
+
+    Modal.field("lifeEventYear").addEventListener("change", () => {
+      const year = Number(Modal.value("lifeEventYear")) || currentYear;
+      const select = Modal.field("lifeEventFlowMonth");
+      const previous = Number(select.value);
+      select.innerHTML = `<option value="-1">不确定 / 全年</option>${flowMonthsForYear(year).map(flow =>
+        `<option value="${flow.index}">${flow.name}月（${flow.range}）</option>`
+      ).join("")}`;
+      select.value = String(previous);
     });
   }
 

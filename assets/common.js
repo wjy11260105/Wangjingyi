@@ -144,7 +144,7 @@
         if (!window.Lunar || !tooltip) return;
         const date = parseDate(button.dataset.flowDate);
         const chart = Lunar.bazi(date.getFullYear(), date.getMonth() + 1, date.getDate(), 12);
-        tooltip.textContent = `${chart.pillars[0].gan}${chart.pillars[0].zhi}年 · ${chart.pillars[1].gan}${chart.pillars[1].zhi}月`;
+        tooltip.textContent = `${chart.pillars[2].gan}${chart.pillars[2].zhi}日`;
         const rect = button.getBoundingClientRect();
         tooltip.style.left = `${Math.min(window.innerWidth - tooltip.offsetWidth - 10, Math.max(10, rect.left + rect.width / 2 - tooltip.offsetWidth / 2))}px`;
         tooltip.style.top = `${rect.top - tooltip.offsetHeight - 8}px`;

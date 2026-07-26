@@ -738,7 +738,7 @@ h2.block-title {
 .life-timeline { display: grid; gap: 9px; }
 .life-event {
   display: grid;
-  grid-template-columns: 62px 1fr auto;
+  grid-template-columns: 90px 1fr auto;
   align-items: center;
   gap: 14px;
   width: 100%;
@@ -759,6 +759,7 @@ h2.block-title {
 }
 .life-event-date b { font-family: Georgia, serif; font-size: 17px; font-weight: 500; }
 .life-event-date small { margin-top: 3px; color: #979e99; font-size: 9px; }
+.life-event-date em { margin-top: 3px; color: #b2b7b3; font-size: 8px; font-style: normal; white-space: nowrap; }
 .life-event-body { min-width: 0; }
 .life-event-body .badge { margin-right: 8px; color: #4d745f; background: var(--green-light); }
 .life-event-body strong { font-size: 13px; }
@@ -1122,6 +1123,6 @@ h2.block-title {
   .pillar-table { grid-template-columns: repeat(2, 1fr); }
   .bazi-summary { grid-template-columns: 1fr 1fr; }
   .bazi-wuxing { grid-column: 1 / -1; }
-  .life-event { grid-template-columns: 52px 1fr; gap: 10px; }
+  .life-event { grid-template-columns: 76px 1fr; gap: 10px; }
   .life-event-edit { display: none; }
 }

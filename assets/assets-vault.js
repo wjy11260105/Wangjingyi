@@ -512,10 +512,19 @@
         const platform = Modal.value("accountPlatform");
         if (!platform) {
           toast("请填写平台名称");
-          Modal.field("accountPlatform").focus();
+          Modal.field("accountPlatform")?.focus();
+          return;
+        }
+        if (!vaultCryptoKey) {
+          toast("保管箱已锁定，请先解锁再保存");
+          return;
+        }
+        if (!window.crypto?.subtle) {
+          toast("当前页面环境不支持加密，请用 HTTPS 打开");
           return;
         }
         const submit = document.getElementById("modalSubmit");
+        const previousText = submit.textContent;
         submit.disabled = true;
         submit.textContent = "加密保存中…";
         try {
@@ -527,11 +536,13 @@
             email: Modal.value("accountEmail"),
             password: encryptedPassword,
             url: Modal.value("accountUrl"),
-            twoFactor: Modal.field("account2fa").checked,
+            twoFactor: Boolean(Modal.field("account2fa")?.checked),
             recovery: Modal.value("accountRecovery"),
             note: Modal.value("accountNote"),
             updatedAt: new Date().toISOString()
           };
+          /* 保存前重新读取，避免同步刷新后内存列表过期导致覆盖丢失。 */
+          accounts = loadAccounts();
           const index = accounts.findIndex(record => record.id === data.id);
           if (index >= 0) accounts[index] = data;
           else accounts.unshift(data);
@@ -540,10 +551,10 @@
           Modal.close();
           App.refresh();
           toast(index >= 0 ? "账户已更新并加密" : "账户已加密保存");
-        } catch {
+        } catch (error) {
           submit.disabled = false;
-          submit.textContent = "保存";
-          toast("密码加密失败");
+          submit.textContent = previousText || "保存";
+          toast(error?.message ? `保存失败：${error.message}` : "密码加密失败，请重试");
         }
       },
       onDelete: account ? () => {

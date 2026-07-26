@@ -1,165 +1,373 @@
-/* 阅读书单 & 人生清单 */
+/* 学习档案 & 人生清单 */
 (() => {
   const { toDateKey, esc, uuid, fmtCN } = U;
   const BOOKS_KEY = "life-books-v1";
   const TRIPS_KEY = "life-trips-v1";
 
-  /* ================= 阅读 ================= */
-  const BOOK_STATUS = {
-    reading: { label: "在读", color: "#4b8b6d", bg: "#e6f2eb" },
-    wish: { label: "想读", color: "#6a82c5", bg: "#eaf0ff" },
-    done: { label: "读完", color: "#a64d28", bg: "#fff0e8" }
+  /* ================= 学习档案（兼容原书单） ================= */
+  const LEARNING_TYPES = {
+    book: { label: "书籍", icon: "📖" },
+    course: { label: "课程", icon: "🎓" },
+    article: { label: "文章", icon: "📄" },
+    video: { label: "视频", icon: "🎬" },
+    practice: { label: "实践", icon: "🧪" }
+  };
+  const LEARNING_CATEGORIES = {
+    tarot: "塔罗",
+    ziwei: "紫微斗数",
+    ai: "AI",
+    data: "数据开发",
+    expression: "表达",
+    sport: "运动",
+    general: "通识"
+  };
+  const LEARNING_STATUS = {
+    wish: { label: "想学", color: "#6a82c5", bg: "#eaf0ff" },
+    learning: { label: "学习中", color: "#347259", bg: "#e3f0e8" },
+    done: { label: "已完成", color: "#a64d28", bg: "#fff0e8" },
+    paused: { label: "已暂停", color: "#7d7680", bg: "#efedf0" }
   };
 
-  const bookSamples = () => ([
-    { id: uuid(), title: "纳瓦尔宝典", author: "埃里克·乔根森", status: "reading", progress: 40, rating: 0, note: "" },
-    { id: uuid(), title: "当我谈跑步时我谈些什么", author: "村上春树", status: "wish", progress: 0, rating: 0, note: "" }
+  const requiredLearningItems = () => ([
+    {
+      id: uuid(), seedKey: "canxue-tarot", type: "course", category: "tarot", title: "残雪老师塔罗课程", mentor: "残雪老师",
+      status: "learning", progress: 0, goal: "系统理解牌义、牌阵与解牌逻辑", entries: []
+    },
+    {
+      id: uuid(), seedKey: "ziwei-study", type: "course", category: "ziwei", title: "紫微斗数系统学习", mentor: "",
+      status: "wish", progress: 0, goal: "从基础排盘逐步理解宫位、星曜和四化", entries: []
+    },
+    {
+      id: uuid(), seedKey: "ai-practice", type: "practice", category: "ai", title: "AI 应用与实践", mentor: "",
+      status: "wish", progress: 0, goal: "将数据开发经验与 AI 应用结合", entries: []
+    }
   ]);
+
+  function normalizeLearningItem(item) {
+    if (item.type && LEARNING_STATUS[item.status]) {
+      return { entries: [], progress: 0, goal: "", mentor: "", category: "general", ...item };
+    }
+    const status = item.status === "reading" ? "learning" : item.status === "done" ? "done" : "wish";
+    const entries = item.note ? [{
+      id: uuid(),
+      date: item.finishedAt || "",
+      chapter: "原书单笔记",
+      content: item.note,
+      gain: "",
+      feeling: "",
+      question: "",
+      practice: "",
+      output: ""
+    }] : [];
+    return {
+      id: item.id || uuid(),
+      type: "book",
+      category: "general",
+      title: item.title || "未命名书籍",
+      mentor: item.author || "",
+      status,
+      progress: Number(item.progress) || 0,
+      goal: "",
+      entries,
+      completedAt: item.finishedAt || ""
+    };
+  }
 
   function loadBooks() {
     const saved = Store.get(BOOKS_KEY, null);
-    if (Array.isArray(saved)) return saved;
-    const samples = bookSamples();
-    Store.set(BOOKS_KEY, samples);
-    return samples;
+    let list = Array.isArray(saved) ? saved.map(normalizeLearningItem) : [];
+    let changed = !Array.isArray(saved) || saved.some(item => !item.type || !LEARNING_STATUS[item.status]);
+    requiredLearningItems().forEach(required => {
+      if (!list.some(item => item.seedKey === required.seedKey || item.title === required.title)) {
+        list.push(required);
+        changed = true;
+      }
+    });
+    if (changed) Store.set(BOOKS_KEY, list);
+    return list;
   }
 
   let books = loadBooks();
   let bookFilter = "all";
+  let selectedLearningId = null;
   const saveBooks = () => Store.set(BOOKS_KEY, books);
-  const stars = n => n ? "★".repeat(n) + "☆".repeat(5 - n) : "";
 
-  function renderReading(root) {
-    books = loadBooks();
-    const year = String(new Date().getFullYear());
-    const doneThisYear = books.filter(book => book.status === "done" && (book.finishedAt || "").startsWith(year)).length;
-    const visible = bookFilter === "all" ? books : books.filter(book => book.status === bookFilter);
-
+  function renderLearningList(root) {
+    const visible = bookFilter === "all" ? books : books.filter(item => item.status === bookFilter);
+    const noteCount = books.reduce((sum, item) => sum + (item.entries?.length || 0), 0);
+    const outputCount = books.reduce((sum, item) =>
+      sum + (item.entries || []).filter(entry => entry.output).length, 0
+    );
     root.innerHTML = `
       <header class="topbar">
         <div>
-          <p class="eyebrow">READING</p>
-          <h1>读过的书，都会长在身上。</h1>
+          <p class="eyebrow">LEARNING ARCHIVE</p>
+          <h1>把输入，慢慢变成自己的东西。</h1>
         </div>
         <div class="top-actions">
-          <button class="primary-btn" id="addBookBtn">＋ <span class="btn-text">添加书籍</span></button>
+          <button class="primary-btn" id="addBookBtn">＋ <span class="btn-text">添加学习项目</span></button>
         </div>
       </header>
       <section class="stats">
         <article class="stat primary">
-          <div class="stat-label">今年读完</div>
-          <div class="stat-value">${doneThisYear} 本</div>
-          <div class="stat-sub">按读完日期统计</div>
+          <div class="stat-label">正在学习</div>
+          <div class="stat-value">${books.filter(item => item.status === "learning").length} 项</div>
+          <div class="stat-sub">持续输入，也持续输出</div>
           <span class="stat-decoration"></span>
         </article>
         <article class="stat">
-          <div class="stat-label">在读</div>
-          <div class="stat-value">${books.filter(book => book.status === "reading").length}</div>
-          <div class="stat-sub">正在进行的阅读</div>
+          <div class="stat-label">学习记录</div>
+          <div class="stat-value">${noteCount}</div>
+          <div class="stat-sub">内容、收获与感受</div>
         </article>
         <article class="stat">
-          <div class="stat-label">想读清单</div>
-          <div class="stat-value">${books.filter(book => book.status === "wish").length}</div>
-          <div class="stat-sub">保持好奇心</div>
+          <div class="stat-label">计划学习</div>
+          <div class="stat-value">${books.filter(item => item.status === "wish").length}</div>
+          <div class="stat-sub">保持有方向的好奇心</div>
+        </article>
+        <article class="stat">
+          <div class="stat-label">输出记录</div>
+          <div class="stat-value">${outputCount}</div>
+          <div class="stat-sub">文章、分享与实践成果</div>
         </article>
       </section>
       <div class="calendar-toolbar">
-        <h2 class="block-title" style="margin:0">我的书架</h2>
+        <h2 class="block-title" style="margin:0">我的学习项目</h2>
         <div class="filters">
           <button class="filter ${bookFilter === "all" ? "active" : ""}" data-bf="all">全部</button>
-          ${Object.entries(BOOK_STATUS).map(([key, status]) =>
-            `<button class="filter ${bookFilter === key ? "active" : ""}" data-bf="${key}">${status.label}</button>`).join("")}
+          ${Object.entries(LEARNING_STATUS).map(([key, status]) =>
+            `<button class="filter ${bookFilter === key ? "active" : ""}" data-bf="${key}">${status.label}</button>`
+          ).join("")}
         </div>
       </div>
-      <div class="book-grid">
-        ${visible.length ? visible.map(book => {
-          const status = BOOK_STATUS[book.status];
-          return `<button class="book-card" data-id="${book.id}">
-            <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
-              <h4>${esc(book.title)}</h4>
+      <div class="learning-grid">
+        ${visible.length ? visible.map(item => {
+          const status = LEARNING_STATUS[item.status];
+          const type = LEARNING_TYPES[item.type] || LEARNING_TYPES.practice;
+          return `<button class="learning-card" data-id="${item.id}">
+            <span class="learning-card-top">
+              <span>${type.icon} ${type.label} · ${LEARNING_CATEGORIES[item.category] || "通识"}</span>
               <span class="badge" style="color:${status.color};background:${status.bg}">${status.label}</span>
-            </div>
-            <span class="author">${esc(book.author || "佚名")}</span>
-            ${book.status === "reading" ? `<div class="goal-progress-row"><div class="progress"><span style="width:${book.progress || 0}%"></span></div><b>${book.progress || 0}%</b></div>` : ""}
-            ${book.status === "done" && book.rating ? `<span class="stars">${stars(book.rating)}</span>` : ""}
-            ${book.note ? `<span class="book-note">${esc(book.note)}</span>` : ""}
+            </span>
+            <strong>${esc(item.title)}</strong>
+            <span class="learning-mentor">${esc(item.mentor || "自主学习")}</span>
+            ${item.goal ? `<p>${esc(item.goal)}</p>` : ""}
+            <span class="learning-card-bottom">
+              <span class="progress"><span style="width:${item.progress || 0}%"></span></span>
+              <b>${item.progress || 0}%</b>
+              <small>${item.entries?.length || 0} 篇记录</small>
+            </span>
           </button>`;
-        }).join("") : `<div class="empty" style="grid-column:1/-1">书架空空，添加第一本书吧</div>`}
+        }).join("") : `<div class="empty" style="grid-column:1/-1">这个状态下还没有学习项目</div>`}
       </div>
     `;
 
-    document.getElementById("addBookBtn").addEventListener("click", () => openBookEditor());
+    document.getElementById("addBookBtn").addEventListener("click", () => openLearningEditor());
     root.querySelectorAll("[data-bf]").forEach(button => button.addEventListener("click", () => {
       bookFilter = button.dataset.bf;
       App.refresh();
     }));
-    root.querySelectorAll(".book-card").forEach(button => button.addEventListener("click", () => {
-      openBookEditor(books.find(book => book.id === button.dataset.id));
+    root.querySelectorAll(".learning-card").forEach(button => button.addEventListener("click", () => {
+      selectedLearningId = button.dataset.id;
+      App.refresh();
     }));
   }
 
-  function openBookEditor(book = null) {
+  function renderLearningDetail(root, item) {
+    const type = LEARNING_TYPES[item.type] || LEARNING_TYPES.practice;
+    const status = LEARNING_STATUS[item.status];
+    const entries = (item.entries || []).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    root.innerHTML = `
+      <header class="topbar learning-detail-head">
+        <div>
+          <button class="learning-back" id="learningBack">← 返回学习档案</button>
+          <p class="eyebrow">${type.icon} ${type.label} · ${LEARNING_CATEGORIES[item.category] || "通识"}</p>
+          <h1>${esc(item.title)}</h1>
+          <p class="learning-detail-sub">${esc(item.mentor || "自主学习")} · ${status.label} · 进度 ${item.progress || 0}%</p>
+        </div>
+        <div class="top-actions">
+          <button class="ghost-btn" id="editLearning">编辑项目</button>
+          <button class="primary-btn" id="addLearningEntry">＋ <span class="btn-text">写学习记录</span></button>
+        </div>
+      </header>
+      ${item.goal ? `<section class="learning-goal"><small>学习目标</small><p>${esc(item.goal)}</p></section>` : ""}
+      <section>
+        <div class="panel-head"><h3>学习文档</h3><span class="hint">${entries.length} 篇记录</span></div>
+        <div class="learning-docs">
+          ${entries.length ? entries.map(entry => `
+            <button class="learning-doc" data-entry-id="${entry.id}">
+              <span class="learning-doc-date">${entry.date ? fmtCN(entry.date) : "日期未记录"}</span>
+              <strong>${esc(entry.chapter || "学习记录")}</strong>
+              ${entry.content ? `<p>${esc(entry.content)}</p>` : ""}
+              <span class="learning-doc-tags">
+                ${entry.gain ? "<i>收获</i>" : ""}
+                ${entry.feeling ? "<i>感受</i>" : ""}
+                ${entry.question ? "<i>疑问</i>" : ""}
+                ${entry.practice ? "<i>实践</i>" : ""}
+                ${entry.output ? "<i>输出</i>" : ""}
+              </span>
+            </button>`).join("") : `<div class="empty">还没有学习记录，写下第一篇吧</div>`}
+        </div>
+      </section>
+    `;
+    document.getElementById("learningBack").addEventListener("click", () => {
+      selectedLearningId = null;
+      App.refresh();
+    });
+    document.getElementById("editLearning").addEventListener("click", () => openLearningEditor(item));
+    document.getElementById("addLearningEntry").addEventListener("click", () => openLearningEntryEditor(item));
+    root.querySelectorAll("[data-entry-id]").forEach(button => button.addEventListener("click", () => {
+      openLearningEntryEditor(item, item.entries.find(entry => entry.id === button.dataset.entryId));
+    }));
+  }
+
+  function renderReading(root) {
+    books = loadBooks();
+    const selected = selectedLearningId && books.find(item => item.id === selectedLearningId);
+    if (selected) renderLearningDetail(root, selected);
+    else renderLearningList(root);
+  }
+
+  function openLearningEditor(item = null) {
     Modal.open({
-      title: book ? "编辑书籍" : "添加书籍",
+      title: item ? "编辑学习项目" : "添加学习项目",
       body: `
         <div class="field full">
-          <label for="bkTitle">书名</label>
-          <input id="bkTitle" required maxlength="60" placeholder="书名" value="${esc(book?.title || "")}">
+          <label for="learnTitle">项目名称</label>
+          <input id="learnTitle" required maxlength="80" placeholder="例如：残雪老师塔罗课程" value="${esc(item?.title || "")}">
         </div>
         <div class="field">
-          <label for="bkAuthor">作者</label>
-          <input id="bkAuthor" maxlength="40" placeholder="作者" value="${esc(book?.author || "")}">
+          <label for="learnType">学习形式</label>
+          <select id="learnType">${Object.entries(LEARNING_TYPES).map(([key, type]) =>
+            `<option value="${key}" ${item?.type === key ? "selected" : ""}>${type.icon} ${type.label}</option>`
+          ).join("")}</select>
         </div>
         <div class="field">
-          <label for="bkStatus">状态</label>
-          <select id="bkStatus">
-            ${Object.entries(BOOK_STATUS).map(([key, status]) =>
-              `<option value="${key}" ${book?.status === key ? "selected" : ""}>${status.label}</option>`).join("")}
-          </select>
+          <label for="learnCategory">主题</label>
+          <select id="learnCategory">${Object.entries(LEARNING_CATEGORIES).map(([key, label]) =>
+            `<option value="${key}" ${item?.category === key ? "selected" : ""}>${label}</option>`
+          ).join("")}</select>
         </div>
         <div class="field">
-          <label for="bkProgress">阅读进度 %</label>
-          <input id="bkProgress" type="number" min="0" max="100" value="${book?.progress || 0}">
+          <label for="learnMentor">老师 / 作者</label>
+          <input id="learnMentor" maxlength="50" placeholder="老师、作者或来源" value="${esc(item?.mentor || "")}">
         </div>
         <div class="field">
-          <label for="bkRating">评分（读完后 1-5）</label>
-          <select id="bkRating">
-            ${[0, 1, 2, 3, 4, 5].map(n =>
-              `<option value="${n}" ${book?.rating === n ? "selected" : ""}>${n === 0 ? "暂不评分" : "★".repeat(n)}</option>`).join("")}
-          </select>
+          <label for="learnStatus">状态</label>
+          <select id="learnStatus">${Object.entries(LEARNING_STATUS).map(([key, status]) =>
+            `<option value="${key}" ${item?.status === key || (!item && key === "wish") ? "selected" : ""}>${status.label}</option>`
+          ).join("")}</select>
+        </div>
+        <div class="field">
+          <label for="learnProgress">学习进度 %</label>
+          <input id="learnProgress" type="number" min="0" max="100" value="${item?.progress || 0}">
         </div>
         <div class="field full">
-          <label for="bkNote">摘录与笔记</label>
-          <textarea id="bkNote" maxlength="500" placeholder="喜欢的句子、自己的思考…">${esc(book?.note || "")}</textarea>
+          <label for="learnGoal">学习目标</label>
+          <textarea id="learnGoal" maxlength="300" placeholder="希望通过这项学习获得什么？">${esc(item?.goal || "")}</textarea>
         </div>
       `,
       onSubmit() {
-        const status = Modal.value("bkStatus");
+        const status = Modal.value("learnStatus");
         const data = {
-          id: book?.id || uuid(),
-          title: Modal.value("bkTitle"),
-          author: Modal.value("bkAuthor"),
+          id: item?.id || uuid(),
+          seedKey: item?.seedKey,
+          type: Modal.value("learnType"),
+          category: Modal.value("learnCategory"),
+          title: Modal.value("learnTitle"),
+          mentor: Modal.value("learnMentor"),
           status,
-          progress: status === "done" ? 100 : Number(Modal.value("bkProgress")) || 0,
-          rating: Number(Modal.value("bkRating")) || 0,
-          note: Modal.value("bkNote"),
-          finishedAt: status === "done" ? (book?.finishedAt || toDateKey(new Date())) : null
+          progress: status === "done" ? 100 : Number(Modal.value("learnProgress")) || 0,
+          goal: Modal.value("learnGoal"),
+          entries: item?.entries || [],
+          completedAt: status === "done" ? (item?.completedAt || toDateKey(new Date())) : ""
         };
         const index = books.findIndex(record => record.id === data.id);
         if (index >= 0) books[index] = data;
         else books.unshift(data);
         saveBooks();
+        selectedLearningId = data.id;
         Modal.close();
         App.refresh();
-        toast(index >= 0 ? "书籍已更新" : "书籍已添加");
+        toast(index >= 0 ? "学习项目已更新" : "学习项目已创建");
       },
-      onDelete: book ? () => {
-        if (!confirm("确定从书架删除这本书吗？")) return;
-        books = books.filter(record => record.id !== book.id);
+      onDelete: item ? () => {
+        if (!confirm("删除项目会同时删除其学习记录，确定吗？")) return;
+        books = books.filter(record => record.id !== item.id);
+        saveBooks();
+        selectedLearningId = null;
+        Modal.close();
+        App.refresh();
+        toast("学习项目已删除");
+      } : null
+    });
+  }
+
+  function openLearningEntryEditor(item, entry = null) {
+    Modal.open({
+      title: entry ? "编辑学习记录" : "写学习记录",
+      wide: true,
+      body: `
+        <div class="field">
+          <label for="entryDate">学习日期</label>
+          <input id="entryDate" type="date" required value="${entry?.date || toDateKey(new Date())}">
+        </div>
+        <div class="field">
+          <label for="entryChapter">章节 / 主题</label>
+          <input id="entryChapter" required maxlength="100" placeholder="例如：第 6 课 大阿卡纳故事线" value="${esc(entry?.chapter || "")}">
+        </div>
+        <div class="field full">
+          <label for="entryContent">学习内容与原始笔记</label>
+          <textarea id="entryContent" maxlength="2000" placeholder="这次学习了什么？">${esc(entry?.content || "")}</textarea>
+        </div>
+        <div class="field full">
+          <label for="entryGain">最大收获</label>
+          <textarea id="entryGain" maxlength="800" placeholder="最重要的新理解是什么？">${esc(entry?.gain || "")}</textarea>
+        </div>
+        <div class="field full">
+          <label for="entryFeeling">自己的感受</label>
+          <textarea id="entryFeeling" maxlength="800" placeholder="这次学习带来了什么感受？">${esc(entry?.feeling || "")}</textarea>
+        </div>
+        <div class="field full">
+          <label for="entryQuestion">仍有疑问</label>
+          <textarea id="entryQuestion" maxlength="800" placeholder="有哪些地方还不理解？">${esc(entry?.question || "")}</textarea>
+        </div>
+        <div class="field full">
+          <label for="entryPractice">实践练习</label>
+          <textarea id="entryPractice" maxlength="800" placeholder="准备如何练习或验证？">${esc(entry?.practice || "")}</textarea>
+        </div>
+        <div class="field full">
+          <label for="entryOutput">输出与成果</label>
+          <textarea id="entryOutput" maxlength="800" placeholder="文章、分享、作品或可以应用的事情">${esc(entry?.output || "")}</textarea>
+        </div>
+      `,
+      onSubmit() {
+        const data = {
+          id: entry?.id || uuid(),
+          date: Modal.value("entryDate"),
+          chapter: Modal.value("entryChapter"),
+          content: Modal.value("entryContent"),
+          gain: Modal.value("entryGain"),
+          feeling: Modal.value("entryFeeling"),
+          question: Modal.value("entryQuestion"),
+          practice: Modal.value("entryPractice"),
+          output: Modal.value("entryOutput")
+        };
+        const index = item.entries.findIndex(record => record.id === data.id);
+        if (index >= 0) item.entries[index] = data;
+        else item.entries.unshift(data);
         saveBooks();
         Modal.close();
         App.refresh();
-        toast("已删除");
+        toast(index >= 0 ? "学习记录已更新" : "学习记录已保存");
+      },
+      onDelete: entry ? () => {
+        if (!confirm("确定删除这篇学习记录吗？")) return;
+        item.entries = item.entries.filter(record => record.id !== entry.id);
+        saveBooks();
+        Modal.close();
+        App.refresh();
+        toast("学习记录已删除");
       } : null
     });
   }

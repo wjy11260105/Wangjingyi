@@ -77,7 +77,7 @@
       .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))
       .slice(0, 5);
 
-    const reading = books.filter(book => book.status === "reading");
+    const learning = books.filter(item => ["learning", "reading"].includes(item.status));
     const futureItems = lifeItems.filter(item => ["idea", "planned", "active"].includes(item.status));
 
     root.innerHTML = `
@@ -163,7 +163,7 @@
           <section class="panel">
             <div class="panel-head"><h3>生活切片</h3></div>
             <div class="overview-list">
-              <div class="overview-item"><span class="oi-icon">📖</span><span class="oi-main">${reading.length ? `在读《${esc(reading[0].title)}》 ${reading[0].progress || 0}%` : "书架上还没有在读的书"}</span></div>
+              <div class="overview-item"><span class="oi-icon">🎓</span><span class="oi-main">${learning.length ? `正在学习：${esc(learning[0].title)} ${learning[0].progress || 0}%` : "还没有进行中的学习项目"}</span></div>
               <div class="overview-item"><span class="oi-icon">🏃</span><span class="oi-main">累计训练 ${workouts.length} 次</span></div>
               <div class="overview-item"><span class="oi-icon">✨</span><span class="oi-main">${futureItems.length ? `想做：${esc(futureItems[0].title)}${futureItems.length > 1 ? ` 等 ${futureItems.length} 件` : ""}` : "写下下一件想做的事吧"}</span></div>
               <div class="overview-item"><span class="oi-icon">🏆</span><span class="oi-main">人生清单累计完成 ${lifeItems.filter(item => item.status === "done").length} 件</span></div>

@@ -642,24 +642,80 @@ h2.block-title {
 .month-grid .cell.l3 { background: var(--green); color: #fff; }
 .month-grid .cell.off { background: transparent; }
 
-/* ---------- 阅读 / 旅行 ---------- */
-.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 13px; }
-.book-card {
+/* ---------- 学习档案 / 人生清单 ---------- */
+.learning-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 13px;
+}
+.learning-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 9px;
-  padding: 16px;
+  min-height: 178px;
+  padding: 17px;
   border: 1px solid var(--line);
-  border-radius: 15px;
+  border-radius: 16px;
   background: #fff;
   cursor: pointer;
   text-align: left;
   transition: .2s;
 }
-.book-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(30,46,38,.08); }
-.book-card h4 { margin: 0; font-size: 14px; }
-.book-card .author { color: #969d98; font-size: 11px; }
-.book-note { color: #79817b; font-size: 11px; line-height: 1.6; white-space: pre-wrap; }
-.stars { color: #d9a13f; letter-spacing: 2px; font-size: 12px; }
+.learning-card:hover { transform: translateY(-2px); border-color: #b8c4bc; box-shadow: 0 10px 22px rgba(30,46,38,.08); }
+.learning-card-top { display: flex; justify-content: space-between; gap: 8px; color: #7c867f; font-size: 9px; }
+.learning-card > strong { margin-top: 3px; font-size: 14px; line-height: 1.4; }
+.learning-mentor { color: #969d98; font-size: 10px; }
+.learning-card > p { margin: 0; color: #778179; font-size: 11px; line-height: 1.55; }
+.learning-card-bottom { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; margin-top: auto; }
+.learning-card-bottom b { font-family: Georgia, serif; font-size: 11px; font-weight: 500; }
+.learning-card-bottom small { color: #9ba29c; font-size: 9px; }
+.learning-back {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  color: #758078;
+  background: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+.learning-back:hover { color: var(--green); }
+.learning-detail-sub { margin: 7px 0 0; color: #8d958f; font-size: 11px; }
+.learning-goal {
+  margin-bottom: 22px;
+  padding: 15px 17px;
+  border-radius: 14px;
+  color: #385a49;
+  background: var(--green-light);
+}
+.learning-goal small { color: #799184; font-size: 9px; font-weight: 800; letter-spacing: .8px; }
+.learning-goal p { margin: 5px 0 0; font-size: 12px; line-height: 1.6; }
+.learning-docs { display: grid; gap: 10px; }
+.learning-doc {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: .15s;
+}
+.learning-doc:hover { border-color: #b8c4bc; box-shadow: 0 7px 18px rgba(30,46,38,.06); }
+.learning-doc-date { color: #9ba29d; font-size: 9px; }
+.learning-doc > strong { font-size: 14px; }
+.learning-doc > p { margin: 0; color: #727d75; font-size: 11px; line-height: 1.65; white-space: pre-wrap; }
+.learning-doc-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.learning-doc-tags i {
+  padding: 3px 8px;
+  border-radius: 12px;
+  color: #50705e;
+  background: var(--green-light);
+  font-size: 8px;
+  font-style: normal;
+}
 .life-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

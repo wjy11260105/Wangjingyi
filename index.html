@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f4f3ef">
-  <title>日程 · 把每一天安排得刚刚好</title>
+  <meta name="theme-color" content="#f7f8fa">
+  <title>拾光 · 我的学习空间</title>
   <style>
     :root {
-      --ink: #17231d;
-      --muted: #768078;
-      --line: #e7e6df;
+      --ink: #1f2329;
+      --muted: #8f959e;
+      --line: #e8eaed;
+      --canvas: #f7f8fa;
       --paper: #fff;
-      --canvas: #f4f3ef;
-      --green: #244f3d;
-      --green-light: #e5eee8;
-      --orange: #e9793f;
-      --radius: 20px;
-      --shadow: 0 18px 48px rgba(30, 46, 38, .08);
+      --blue: #3370ff;
+      --blue-soft: #eaf0ff;
+      --violet: #7c5cfc;
+      --green: #20a162;
+      --orange: #f08c46;
+      --shadow: 0 16px 40px rgba(31, 35, 41, .10);
     }
 
     * { box-sizing: border-box; }
@@ -29,472 +30,525 @@
       font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    button, input, select, textarea { font: inherit; }
-    button { color: inherit; }
+    button, input, textarea, select { color: inherit; font: inherit; }
+    button { cursor: pointer; }
     svg { display: block; }
 
     .app {
       display: grid;
-      grid-template-columns: 250px minmax(620px, 1fr) 290px;
+      grid-template-columns: 250px minmax(560px, 1fr) 310px;
       min-height: 100vh;
-      max-width: 1600px;
-      margin: 0 auto;
       background: var(--paper);
     }
 
+    /* Sidebar */
     .sidebar {
+      position: sticky;
+      top: 0;
       display: flex;
       flex-direction: column;
-      padding: 32px 22px;
+      height: 100vh;
+      padding: 20px 14px;
       border-right: 1px solid var(--line);
-      background: #fafaf7;
+      background: #f7f8fa;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 11px;
-      margin-bottom: 42px;
-      padding: 0 8px;
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: -.4px;
+      gap: 10px;
+      padding: 0 8px 18px;
+      font-size: 17px;
+      font-weight: 750;
     }
     .brand-mark {
       display: grid;
       place-items: center;
-      width: 35px;
-      height: 35px;
-      color: white;
-      background: var(--green);
-      border-radius: 11px;
-      transform: rotate(-3deg);
+      width: 34px;
+      height: 34px;
+      color: #fff;
+      background: linear-gradient(145deg, #3370ff, #6a8dff);
+      border-radius: 10px;
+      box-shadow: 0 7px 16px rgba(51,112,255,.22);
     }
-    .nav-label, .section-label {
-      margin: 0 10px 11px;
-      color: #a0a7a1;
+    .search {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .search svg {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      width: 16px;
+      color: #9da2aa;
+      transform: translateY(-50%);
+    }
+    .search input {
+      width: 100%;
+      height: 38px;
+      padding: 0 34px 0 36px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      outline: none;
+      background: #ebeef2;
+      font-size: 13px;
+      transition: .2s;
+    }
+    .search input:focus { border-color: #b7c8ff; background: #fff; box-shadow: 0 0 0 3px #eaf0ff; }
+    .shortcut {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      color: #afb3ba;
       font-size: 11px;
-      font-weight: 750;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
+      transform: translateY(-50%);
     }
-    .nav { display: grid; gap: 5px; }
+    .nav { display: grid; gap: 3px; }
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
       width: 100%;
-      padding: 11px 13px;
-      border: 0;
-      border-radius: 11px;
-      color: #667069;
-      background: transparent;
-      cursor: pointer;
-      text-align: left;
-      transition: .2s ease;
-    }
-    .nav-item:hover, .nav-item.active {
-      color: var(--green);
-      background: var(--green-light);
-      font-weight: 700;
-    }
-    .nav-item svg { width: 18px; }
-    .nav-count {
-      min-width: 23px;
-      margin-left: auto;
-      padding: 2px 6px;
-      border-radius: 10px;
-      color: #fff;
-      background: var(--green);
-      font-size: 11px;
-      text-align: center;
-    }
-
-    .mini-calendar {
-      margin-top: 34px;
-      padding: 18px 15px 14px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: #fff;
-    }
-    .mini-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      font-size: 13px;
-      font-weight: 750;
-    }
-    .mini-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      text-align: center;
-      font-size: 11px;
-    }
-    .mini-grid span {
-      display: grid;
-      place-items: center;
-      aspect-ratio: 1;
-      border-radius: 7px;
-      color: #707a73;
-    }
-    .mini-grid .dow { color: #abb0ac; font-weight: 700; }
-    .mini-grid .muted-day { color: #cdd0cd; }
-    .mini-grid .today { color: #fff; background: var(--green); font-weight: 800; }
-    .quote {
-      margin-top: auto;
-      padding: 22px 16px 4px;
-      color: #8b938d;
-      font-family: Georgia, serif;
-      font-size: 13px;
-      line-height: 1.65;
-    }
-
-    .main {
-      min-width: 0;
-      padding: 34px 34px 38px;
-      overflow: hidden;
-    }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 28px;
-    }
-    .eyebrow {
-      margin: 0 0 5px;
-      color: var(--orange);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-    h1 {
-      margin: 0;
-      font-family: Georgia, "Songti SC", serif;
-      font-size: clamp(28px, 3vw, 40px);
-      font-weight: 500;
-      letter-spacing: -1px;
-    }
-    .top-actions { display: flex; align-items: center; gap: 10px; }
-    .icon-btn, .ghost-btn, .primary-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      height: 42px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: .2s ease;
-    }
-    .icon-btn {
-      width: 42px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-    .icon-btn:hover, .ghost-btn:hover { border-color: #bdc4be; background: #f7f8f6; }
-    .ghost-btn {
-      padding: 0 15px;
-      border: 1px solid var(--line);
-      background: #fff;
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .primary-btn {
-      padding: 0 17px;
-      border: 0;
-      color: #fff;
-      background: var(--green);
-      box-shadow: 0 8px 20px rgba(36, 79, 61, .2);
-      font-size: 13px;
-      font-weight: 750;
-    }
-    .primary-btn:hover { transform: translateY(-1px); background: #193c2d; }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr 1fr;
-      gap: 13px;
-      margin-bottom: 25px;
-    }
-    .stat {
-      position: relative;
-      min-height: 112px;
-      padding: 20px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 17px;
-      background: #fafaf8;
-    }
-    .stat.primary { color: #fff; background: var(--green); border-color: var(--green); }
-    .stat-label { color: #8a938d; font-size: 12px; font-weight: 650; }
-    .primary .stat-label { color: rgba(255,255,255,.68); }
-    .stat-value {
-      margin-top: 9px;
-      font-family: Georgia, serif;
-      font-size: 30px;
-      line-height: 1;
-    }
-    .stat-sub { margin-top: 8px; color: #969d98; font-size: 11px; }
-    .primary .stat-sub { color: rgba(255,255,255,.6); }
-    .stat-decoration {
-      position: absolute;
-      right: -20px;
-      bottom: -28px;
-      width: 95px;
-      height: 95px;
-      border: 18px solid rgba(255,255,255,.06);
-      border-radius: 50%;
-    }
-
-    .calendar-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 13px;
-    }
-    .calendar-title { display: flex; align-items: center; gap: 12px; }
-    .calendar-title h2 { margin: 0; font-size: 17px; }
-    .week-nav { display: flex; gap: 5px; }
-    .week-nav .icon-btn { width: 31px; height: 31px; border-radius: 9px; }
-    .filters {
-      display: flex;
-      gap: 5px;
-      padding: 4px;
-      border-radius: 11px;
-      background: #f2f3ef;
-      overflow-x: auto;
-    }
-    .filter {
-      flex: 0 0 auto;
-      padding: 6px 10px;
+      padding: 9px 11px;
       border: 0;
       border-radius: 8px;
-      color: #89918b;
+      color: #646a73;
       background: transparent;
+      text-align: left;
+    }
+    .nav-item:hover, .nav-item.active { color: #245bdb; background: var(--blue-soft); }
+    .nav-item.active { font-weight: 650; }
+    .nav-item svg { width: 17px; }
+    .count {
+      min-width: 20px;
+      margin-left: auto;
+      color: #9ca1a9;
       font-size: 11px;
-      cursor: pointer;
+      text-align: center;
     }
-    .filter.active { color: var(--ink); background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.06); font-weight: 700; }
-
-    .week {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(92px, 1fr));
-      min-height: 360px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow-x: auto;
-      background: #fff;
+    .nav-item.active .count { color: #5e83df; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 22px 8px 8px;
+      color: #8f959e;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: .3px;
     }
-    .day {
-      min-width: 92px;
-      padding: 13px 7px;
-      border-right: 1px solid var(--line);
-    }
-    .day:last-child { border-right: 0; }
-    .day.today { background: linear-gradient(180deg, #f3f7f4, #fff 38%); }
-    .day-head { margin-bottom: 17px; text-align: center; }
-    .day-name { color: #a0a7a2; font-size: 10px; font-weight: 750; }
-    .day-number {
+    .tiny-btn {
       display: grid;
       place-items: center;
-      width: 31px;
-      height: 31px;
-      margin: 6px auto 0;
-      border-radius: 50%;
-      font-family: Georgia, serif;
-      font-size: 16px;
-    }
-    .day.today .day-number { color: white; background: var(--green); }
-    .day-events { display: grid; gap: 7px; }
-    .event {
-      min-height: 62px;
-      padding: 9px 8px;
+      width: 23px;
+      height: 23px;
       border: 0;
-      border-left: 3px solid;
-      border-radius: 9px;
-      text-align: left;
-      cursor: pointer;
-      transition: .18s ease;
+      border-radius: 6px;
+      color: #8f959e;
+      background: transparent;
+      font-size: 18px;
     }
-    .event:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(30,40,34,.09); }
-    .event-time { display: block; margin-bottom: 5px; font-size: 9px; font-weight: 750; opacity: .7; }
-    .event-title { display: block; font-size: 11px; font-weight: 750; line-height: 1.35; }
-    .event-location { display: block; margin-top: 5px; font-size: 9px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .event.competition { color: #a64d28; background: #fff0e8; border-color: #e9793f; }
-    .event.sport { color: #285743; background: #e6f2eb; border-color: #4b8b6d; }
-    .event.work { color: #3d4f81; background: #eaf0ff; border-color: #6a82c5; }
-    .event.study { color: #72538a; background: #f4ecfa; border-color: #9d73b9; }
-    .event.life { color: #756226; background: #faf4da; border-color: #c5a64d; }
-
-    .rightbar {
-      padding: 34px 25px;
-      border-left: 1px solid var(--line);
-      background: #fafaf7;
+    .tiny-btn:hover { color: var(--ink); background: #e6e8eb; }
+    .spaces { display: grid; gap: 2px; }
+    .space-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #5f656d;
+      font-size: 13px;
     }
-    .profile { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 42px; }
+    .space-item:hover { background: #eef0f3; }
+    .emoji { width: 21px; text-align: center; }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 14px 8px 2px;
+      border-top: 1px solid var(--line);
+    }
+    .profile { display: flex; align-items: center; gap: 10px; }
     .avatar {
       display: grid;
       place-items: center;
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       color: #fff;
-      background: var(--orange);
-      font-family: Georgia, serif;
+      background: linear-gradient(145deg, #8b6cf6, #5f47cd);
+      font-size: 12px;
       font-weight: 700;
     }
-    .profile-text { font-size: 12px; font-weight: 750; }
-    .profile-text span { display: block; margin-top: 2px; color: #9aa09b; font-size: 10px; font-weight: 500; }
-    .side-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
-    .side-title h3 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 20px; font-weight: 500; }
-    .side-title span { color: #a1a7a2; font-size: 10px; }
-    .upcoming { display: grid; gap: 9px; }
-    .upcoming-card {
-      position: relative;
-      display: grid;
-      grid-template-columns: 42px 1fr;
-      gap: 11px;
-      padding: 13px 12px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-    }
-    .date-box {
-      padding-top: 2px;
-      border-right: 1px solid var(--line);
-      color: #8a928c;
-      font-size: 9px;
-      text-align: center;
-    }
-    .date-box strong { display: block; color: var(--ink); font-family: Georgia, serif; font-size: 21px; font-weight: 500; }
-    .upcoming-info { min-width: 0; }
-    .upcoming-type { color: var(--orange); font-size: 8px; font-weight: 800; letter-spacing: .8px; }
-    .upcoming-info h4 { margin: 5px 0 4px; overflow: hidden; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
-    .upcoming-info p { margin: 0; color: #979e99; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .empty { padding: 28px 12px; color: #9da39e; font-size: 12px; text-align: center; }
-    .focus-card {
-      margin-top: 28px;
-      padding: 20px;
-      border-radius: 17px;
-      color: #fff;
-      background: #253a30;
-    }
-    .focus-card small { color: rgba(255,255,255,.55); font-size: 9px; font-weight: 800; letter-spacing: 1px; }
-    .focus-card h4 { margin: 9px 0 8px; font-family: Georgia, "Songti SC", serif; font-size: 17px; font-weight: 500; }
-    .focus-card p { margin: 0; color: rgba(255,255,255,.6); font-size: 10px; line-height: 1.6; }
-    .progress { height: 4px; margin-top: 16px; overflow: hidden; border-radius: 3px; background: rgba(255,255,255,.12); }
-    .progress span { display: block; width: 72%; height: 100%; border-radius: inherit; background: var(--orange); }
+    .profile strong { display: block; font-size: 12px; }
+    .profile span { color: #9ca1a9; font-size: 10px; }
 
-    .modal-backdrop {
+    /* Main document */
+    .main { min-width: 0; background: #fff; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(12px);
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      color: #8f959e;
+      font-size: 12px;
+    }
+    .breadcrumb strong {
+      max-width: 240px;
+      overflow: hidden;
+      color: #4d5158;
+      font-weight: 550;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn, .outline-btn, .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      height: 34px;
+      border-radius: 8px;
+      transition: .18s;
+    }
+    .icon-btn {
+      width: 34px;
+      border: 0;
+      color: #646a73;
+      background: transparent;
+    }
+    .icon-btn:hover, .outline-btn:hover { background: #f1f2f4; }
+    .icon-btn svg { width: 18px; }
+    .outline-btn { padding: 0 12px; border: 1px solid var(--line); background: #fff; font-size: 12px; }
+    .primary-btn { padding: 0 14px; border: 0; color: #fff; background: var(--blue); font-size: 12px; font-weight: 650; }
+    .primary-btn:hover { background: #2864ea; transform: translateY(-1px); }
+    .document {
+      width: min(780px, calc(100% - 70px));
+      margin: 0 auto;
+      padding: 48px 0 100px;
+    }
+    .cover {
+      position: relative;
+      height: 144px;
+      margin-bottom: -32px;
+      overflow: hidden;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 78% 24%, rgba(255,255,255,.5) 0 3%, transparent 3.3%),
+        linear-gradient(115deg, #e9f0ff, #f1edff 56%, #fff2e8);
+    }
+    .cover::after {
+      position: absolute;
+      right: 9%;
+      bottom: -44px;
+      width: 170px;
+      height: 170px;
+      border: 30px solid rgba(255,255,255,.38);
+      border-radius: 50%;
+      content: "";
+    }
+    .doc-icon {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 66px;
+      height: 66px;
+      margin-left: 27px;
+      border: 5px solid #fff;
+      border-radius: 16px;
+      background: #fff6df;
+      box-shadow: 0 8px 20px rgba(37,42,49,.10);
+      font-size: 34px;
+    }
+    .title-input {
+      width: 100%;
+      margin: 23px 0 10px;
+      padding: 0;
+      border: 0;
+      outline: none;
+      color: #1f2329;
+      background: transparent;
+      font-size: clamp(30px, 4vw, 42px);
+      font-weight: 780;
+      letter-spacing: -1.4px;
+    }
+    .doc-meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 30px;
+      color: #a0a5ad;
+      font-size: 11px;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #34b675; }
+    .editor-toolbar {
+      position: sticky;
+      top: 71px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      width: max-content;
+      max-width: 100%;
+      margin-bottom: 26px;
+      padding: 5px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 7px 22px rgba(31,35,41,.07);
+    }
+    .tool {
+      flex: 0 0 auto;
+      min-width: 30px;
+      height: 30px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      font-size: 12px;
+    }
+    .tool:hover { background: #f1f2f4; }
+    .tool-divider { width: 1px; height: 19px; margin: 0 3px; background: var(--line); }
+    .editor {
+      min-height: 430px;
+      outline: none;
+      color: #373b42;
+      font-size: 15px;
+      line-height: 1.85;
+    }
+    .editor h2 { margin: 30px 0 9px; color: #20242a; font-size: 23px; line-height: 1.4; }
+    .editor h3 { margin: 24px 0 7px; font-size: 18px; }
+    .editor p { margin: 8px 0; }
+    .editor ul, .editor ol { padding-left: 25px; }
+    .editor li { margin: 5px 0; padding-left: 3px; }
+    .editor blockquote {
+      margin: 16px 0;
+      padding: 11px 15px;
+      border-left: 3px solid #7398f7;
+      color: #5f6570;
+      background: #f5f8ff;
+      border-radius: 0 8px 8px 0;
+    }
+    .editor a { color: #245bdb; text-decoration: none; }
+    .editor:empty::before { color: #c0c4ca; content: "输入 / 开始记录今天的学习…"; }
+
+    /* Resource panel */
+    .resources {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px 20px;
+      overflow-y: auto;
+      border-left: 1px solid var(--line);
+      background: #fbfbfc;
+    }
+    .resource-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 19px; }
+    .resource-head h2 { margin: 0; font-size: 15px; }
+    .resource-head span { color: #9ca1a9; font-size: 11px; }
+    .progress-card {
+      margin-bottom: 22px;
+      padding: 16px;
+      border: 1px solid #dfe6fa;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #f3f6ff, #fff);
+    }
+    .progress-top { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 11px; }
+    .progress-top strong { color: #335da8; }
+    .progress-bar { height: 6px; overflow: hidden; border-radius: 4px; background: #dfe7fa; }
+    .progress-bar span { display: block; width: 68%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3370ff, #7699f7); }
+    .tabs { display: flex; gap: 16px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+    .tab {
+      position: relative;
+      padding: 0 1px 10px;
+      border: 0;
+      color: #8f959e;
+      background: transparent;
+      font-size: 12px;
+    }
+    .tab.active { color: #245bdb; font-weight: 650; }
+    .tab.active::after {
+      position: absolute;
+      right: 0;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--blue);
+      content: "";
+    }
+    .resource-list { display: grid; gap: 10px; }
+    .resource-card {
+      position: relative;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fff;
+      transition: .18s;
+    }
+    .resource-card:hover { border-color: #ccd8f7; box-shadow: 0 8px 22px rgba(31,35,41,.06); transform: translateY(-1px); }
+    .resource-type { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; color: #9ca1a9; font-size: 9px; font-weight: 700; letter-spacing: .5px; }
+    .type-icon {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: #edf2ff;
+      font-size: 12px;
+    }
+    .resource-card h3 { margin: 0 22px 6px 0; font-size: 13px; line-height: 1.45; }
+    .resource-card p {
+      display: -webkit-box;
+      margin: 0 0 10px;
+      overflow: hidden;
+      color: #8f959e;
+      font-size: 10px;
+      line-height: 1.5;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    .resource-card a { color: inherit; text-decoration: none; }
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag { padding: 3px 6px; border-radius: 5px; color: #69717d; background: #f1f2f4; font-size: 9px; }
+    .star {
+      position: absolute;
+      top: 11px;
+      right: 10px;
+      border: 0;
+      color: #c4c7cc;
+      background: transparent;
+      font-size: 17px;
+    }
+    .star.active { color: #f5a623; }
+    .empty { padding: 32px 8px; color: #a8adb4; font-size: 11px; line-height: 1.7; text-align: center; }
+    .add-resource {
+      width: 100%;
+      height: 38px;
+      margin-top: 12px;
+      border: 1px dashed #cbd0d8;
+      border-radius: 9px;
+      color: #6b727c;
+      background: transparent;
+      font-size: 11px;
+    }
+    .add-resource:hover { color: #245bdb; border-color: #8ba8ed; background: #f6f8ff; }
+
+    /* Dialogs */
+    .backdrop {
       position: fixed;
       inset: 0;
       z-index: 20;
       display: grid;
       place-items: center;
       padding: 20px;
-      background: rgba(18, 29, 23, .45);
-      backdrop-filter: blur(5px);
-      opacity: 0;
       visibility: hidden;
-      transition: .2s ease;
-    }
-    .modal-backdrop.open { opacity: 1; visibility: visible; }
-    .modal {
-      width: min(520px, 100%);
-      max-height: 90vh;
-      padding: 27px;
-      overflow-y: auto;
-      border-radius: 22px;
-      background: #fff;
-      box-shadow: var(--shadow);
-      transform: translateY(12px);
-      transition: .2s ease;
-    }
-    .open .modal { transform: none; }
-    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 23px; }
-    .modal-head h3 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 24px; font-weight: 500; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .field { display: grid; gap: 7px; }
-    .field.full { grid-column: 1 / -1; }
-    .field label { color: #69736c; font-size: 11px; font-weight: 750; }
-    .field input, .field select, .field textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      outline: none;
-      background: #fbfbf9;
+      background: rgba(31,35,41,.42);
+      opacity: 0;
+      backdrop-filter: blur(4px);
       transition: .2s;
     }
-    .field input, .field select { height: 42px; padding: 0 12px; }
-    .field textarea { min-height: 76px; padding: 11px 12px; resize: vertical; }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: #739181; box-shadow: 0 0 0 3px #edf3ef; background: #fff; }
-    .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
-    .delete-btn { display: none; color: #b44c42; border-color: #efd5d2; }
-    .delete-btn.show { display: inline-flex; }
-    .right-actions { display: flex; gap: 9px; margin-left: auto; }
-    .mobile-nav { display: none; }
+    .backdrop.open { visibility: visible; opacity: 1; }
+    .modal {
+      width: min(480px, 100%);
+      padding: 25px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      transform: translateY(10px);
+      transition: .2s;
+    }
+    .open .modal { transform: none; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .modal-head h2 { margin: 0; font-size: 19px; }
+    .form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: #646a73; font-size: 11px; font-weight: 650; }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      border: 1px solid #dfe1e5;
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+    }
+    .field input, .field select { height: 40px; padding: 0 11px; }
+    .field textarea { min-height: 72px; padding: 10px 11px; resize: vertical; }
+    .field input:focus, .field textarea:focus { border-color: #7e9bea; box-shadow: 0 0 0 3px #edf2ff; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
     .toast {
       position: fixed;
-      right: 24px;
-      bottom: 24px;
+      right: 25px;
+      bottom: 25px;
       z-index: 30;
-      padding: 12px 17px;
-      border-radius: 11px;
+      padding: 11px 16px;
+      border-radius: 9px;
       color: #fff;
-      background: #1f362b;
+      background: #30343b;
       box-shadow: var(--shadow);
-      font-size: 12px;
-      transform: translateY(20px);
+      font-size: 11px;
       opacity: 0;
+      transform: translateY(14px);
       pointer-events: none;
-      transition: .25s;
+      transition: .22s;
     }
-    .toast.show { transform: none; opacity: 1; }
+    .toast.show { opacity: 1; transform: none; }
+    .mobile-bar { display: none; }
 
-    @media (max-width: 1180px) {
-      .app { grid-template-columns: 220px minmax(600px, 1fr); }
-      .rightbar { display: none; }
+    @media (max-width: 1120px) {
+      .app { grid-template-columns: 230px 1fr; }
+      .resources {
+        position: fixed;
+        right: 0;
+        z-index: 10;
+        width: 310px;
+        box-shadow: -14px 0 35px rgba(31,35,41,.08);
+        transform: translateX(100%);
+        transition: .25s;
+      }
+      .resources.open { transform: none; }
+      #toggleResources { display: inline-flex; }
     }
-    @media (max-width: 860px) {
-      .app { display: block; padding-bottom: 70px; }
+    @media (min-width: 1121px) { #toggleResources { display: none; } }
+    @media (max-width: 760px) {
+      .app { display: block; padding-bottom: 62px; }
       .sidebar { display: none; }
-      .main { padding: 24px 18px 28px; }
-      .stats { grid-template-columns: 1fr 1fr; }
-      .stat.primary { grid-column: 1 / -1; }
-      .week { grid-template-columns: repeat(7, minmax(106px, 1fr)); }
-      .mobile-nav {
+      .topbar { padding: 0 15px; }
+      .breadcrumb span:first-child, .breadcrumb i { display: none; }
+      .actions .outline-btn { display: none; }
+      .document { width: calc(100% - 34px); padding-top: 24px; }
+      .cover { height: 112px; }
+      .title-input { font-size: 30px; }
+      .editor-toolbar { top: 66px; width: 100%; }
+      .resources { width: min(90vw, 330px); }
+      .mobile-bar {
         position: fixed;
         right: 12px;
         bottom: 10px;
         left: 12px;
-        z-index: 10;
+        z-index: 8;
         display: flex;
         align-items: center;
         justify-content: space-around;
-        padding: 8px 10px;
-        border: 1px solid rgba(255,255,255,.5);
-        border-radius: 17px;
-        background: rgba(255,255,255,.92);
-        box-shadow: 0 10px 30px rgba(20,30,25,.14);
+        height: 52px;
+        border: 1px solid rgba(255,255,255,.7);
+        border-radius: 15px;
+        background: rgba(255,255,255,.95);
+        box-shadow: 0 8px 30px rgba(31,35,41,.13);
         backdrop-filter: blur(12px);
       }
-      .mobile-nav button { border: 0; color: #8a938d; background: transparent; font-size: 10px; }
-      .mobile-add { width: 43px; height: 43px; border-radius: 13px !important; color: #fff !important; background: var(--green) !important; font-size: 23px !important; }
-    }
-    @media (max-width: 560px) {
-      .topbar { align-items: flex-start; }
-      .top-actions .icon-btn, .top-actions .ghost-btn { display: none; }
-      .primary-btn span { display: none; }
-      .stats { gap: 9px; }
-      .stat { min-height: 100px; padding: 16px; }
-      .calendar-toolbar { align-items: flex-start; flex-direction: column; }
-      .filters { width: 100%; }
-      .form-grid { grid-template-columns: 1fr; }
-      .field.full { grid-column: auto; }
-      .modal { padding: 22px 18px; }
+      .mobile-bar button { border: 0; color: #7d838c; background: transparent; font-size: 10px; }
+      .mobile-new { width: 38px; height: 38px; border-radius: 11px !important; color: #fff !important; background: var(--blue) !important; font-size: 20px !important; }
     }
   </style>
 </head>
@@ -502,179 +556,116 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="brand-mark">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2H20v17H8.5A2.5 2.5 0 0 0 6 21.5v-17Z" stroke="currentColor" stroke-width="2"/><path d="M6 5H4v14.5A2.5 2.5 0 0 0 6.5 22H20" stroke="currentColor" stroke-width="2"/></svg>
         </span>
-        日程
+        拾光学习库
       </div>
-      <p class="nav-label">工作台</p>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="searchInput" placeholder="搜索笔记与材料" aria-label="搜索笔记与材料">
+        <span class="shortcut">⌘ K</span>
+      </div>
       <nav class="nav" aria-label="主导航">
-        <button class="nav-item active">
-          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 2v4M16 2v4M3 9h18" stroke="currentColor" stroke-width="1.8"/></svg>
-          我的日程 <span class="nav-count" id="navCount">0</span>
+        <button class="nav-item active" data-view="all">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.8"/><path d="M8 8h7M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          我的文档 <span class="count" id="docCount">0</span>
         </button>
-        <button class="nav-item" data-filter-link="competition">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" stroke="currentColor" stroke-width="1.8"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="1.8"/></svg>
-          比赛赛事
+        <button class="nav-item" data-view="recent">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          最近浏览
         </button>
-        <button class="nav-item" data-filter-link="sport">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12M4 5v4M20 5v4M8 12h8M6 10v4M18 10v4M6 17h12M4 15v4M20 15v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          运动训练
-        </button>
-        <button class="nav-item" data-filter-link="work">
-          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9 7V4h6v3M3 12h18" stroke="currentColor" stroke-width="1.8"/></svg>
-          工作学习
+        <button class="nav-item" data-view="favorite">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          我的收藏 <span class="count" id="favoriteCount">0</span>
         </button>
       </nav>
-      <div class="mini-calendar">
-        <div class="mini-head"><span id="miniMonth"></span><span>今天</span></div>
-        <div class="mini-grid" id="miniGrid"></div>
+      <div class="section-head"><span>文档列表</span><button class="tiny-btn" title="新建文档" id="sideNew">+</button></div>
+      <div class="spaces" id="docList"></div>
+      <div class="sidebar-bottom">
+        <div class="profile">
+          <div class="avatar">JY</div>
+          <div><strong>我的学习空间</strong><span>个人知识库 · 已同步</span></div>
+        </div>
       </div>
-      <p class="quote">“不必填满每一分钟，<br>要让每一分钟都有意义。”</p>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <div>
-          <p class="eyebrow" id="todayLabel">TODAY</p>
-          <h1 id="greeting">上午好，今天也从容前进。</h1>
-        </div>
-        <div class="top-actions">
-          <button class="icon-btn" id="todayBtn" title="回到今天" aria-label="回到今天">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <div class="breadcrumb"><span>人工智能</span><i>/</i><strong id="crumbTitle">机器学习入门笔记</strong></div>
+        <div class="actions">
+          <button class="icon-btn" id="favoriteDoc" title="收藏文档" aria-label="收藏文档">☆</button>
+          <button class="outline-btn" id="newDoc">＋ 新建文档</button>
+          <button class="icon-btn" id="toggleResources" title="查看材料" aria-label="查看材料">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M8 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3M11 13 21 3M15 3h6v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button class="primary-btn" id="addBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <span>添加日程</span>
-          </button>
+          <button class="primary-btn" id="saveBtn">保存</button>
         </div>
       </header>
 
-      <section class="stats" aria-label="本周概览">
-        <article class="stat primary">
-          <div class="stat-label">本周安排</div>
-          <div class="stat-value"><span id="weekCount">0</span> 项</div>
-          <div class="stat-sub" id="weekHint">保持自己的节奏</div>
-          <span class="stat-decoration"></span>
-        </article>
-        <article class="stat">
-          <div class="stat-label">比赛与重要事项</div>
-          <div class="stat-value" id="importantCount">0</div>
-          <div class="stat-sub">提前准备，从容上场</div>
-        </article>
-        <article class="stat">
-          <div class="stat-label">运动训练</div>
-          <div class="stat-value"><span id="sportHours">0</span><small style="font-size:13px"> 小时</small></div>
-          <div class="stat-sub">本周累计时长</div>
-        </article>
-      </section>
-
-      <section>
-        <div class="calendar-toolbar">
-          <div class="calendar-title">
-            <h2 id="weekTitle">本周</h2>
-            <div class="week-nav">
-              <button class="icon-btn" id="prevWeek" aria-label="上一周">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              </button>
-              <button class="icon-btn" id="nextWeek" aria-label="下一周">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="filters" aria-label="日程筛选">
-            <button class="filter active" data-filter="all">全部</button>
-            <button class="filter" data-filter="competition">比赛</button>
-            <button class="filter" data-filter="sport">运动</button>
-            <button class="filter" data-filter="work">工作</button>
-            <button class="filter" data-filter="study">学习</button>
-            <button class="filter" data-filter="life">生活</button>
-          </div>
+      <article class="document">
+        <div class="cover"></div>
+        <div class="doc-icon" id="docIcon">🧠</div>
+        <input class="title-input" id="titleInput" maxlength="60" aria-label="文档标题">
+        <div class="doc-meta">
+          <span class="status-dot"></span>
+          <span id="saveStatus">所有更改已保存</span>
+          <span>·</span>
+          <span id="updatedAt">刚刚更新</span>
         </div>
-        <div class="week" id="weekGrid" aria-live="polite"></div>
-      </section>
+        <div class="editor-toolbar" aria-label="编辑工具栏">
+          <button class="tool" data-command="formatBlock" data-value="p">正文</button>
+          <span class="tool-divider"></span>
+          <button class="tool" data-command="bold" title="加粗"><b>B</b></button>
+          <button class="tool" data-command="italic" title="斜体"><i>I</i></button>
+          <button class="tool" data-command="formatBlock" data-value="h2">H2</button>
+          <span class="tool-divider"></span>
+          <button class="tool" data-command="insertUnorderedList" title="无序列表">☷</button>
+          <button class="tool" data-command="insertOrderedList" title="有序列表">1.</button>
+          <button class="tool" data-command="formatBlock" data-value="blockquote" title="引用">❝</button>
+          <button class="tool" id="linkTool" title="插入链接">🔗</button>
+        </div>
+        <div class="editor" id="editor" contenteditable="true" spellcheck="true" aria-label="文档内容"></div>
+      </article>
     </main>
 
-    <aside class="rightbar">
-      <div class="profile">
-        <div class="avatar">我</div>
-        <div class="profile-text">我的日程<span id="profileDate"></span></div>
+    <aside class="resources" id="resources">
+      <div class="resource-head"><h2>学习材料</h2><span><b id="resourceCount">0</b> 项</span></div>
+      <div class="progress-card">
+        <div class="progress-top"><strong>本周学习进度</strong><span>68%</span></div>
+        <div class="progress-bar"><span></span></div>
       </div>
-      <div class="side-title">
-        <h3>接下来</h3>
-        <span>未来 7 天</span>
+      <div class="tabs">
+        <button class="tab active" data-tab="all">全部</button>
+        <button class="tab" data-tab="article">文章</button>
+        <button class="tab" data-tab="video">视频</button>
+        <button class="tab" data-tab="course">课程</button>
       </div>
-      <div class="upcoming" id="upcoming"></div>
-      <div class="focus-card">
-        <small>本周小目标</small>
-        <h4>专注，也给生活留白</h4>
-        <p>完成重要事项，也别忘了为休息和喜欢的事留出时间。</p>
-        <div class="progress"><span></span></div>
-      </div>
+      <div class="resource-list" id="resourceList"></div>
+      <button class="add-resource" id="addResource">＋ 添加学习材料</button>
     </aside>
   </div>
 
-  <nav class="mobile-nav" aria-label="移动端导航">
-    <button>本周</button>
-    <button>比赛</button>
-    <button class="mobile-add" id="mobileAdd" aria-label="添加日程">+</button>
-    <button>训练</button>
-    <button>更多</button>
+  <nav class="mobile-bar">
+    <button>文档</button>
+    <button>空间</button>
+    <button class="mobile-new" id="mobileNew">＋</button>
+    <button id="mobileResources">材料</button>
+    <button>我的</button>
   </nav>
 
-  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="backdrop" id="resourceModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
-      <div class="modal-head">
-        <h3 id="modalTitle">添加新日程</h3>
-        <button class="icon-btn" id="closeModal" aria-label="关闭">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-      <form id="eventForm">
-        <input type="hidden" id="eventId">
-        <div class="form-grid">
-          <div class="field full">
-            <label for="eventTitle">日程名称</label>
-            <input id="eventTitle" required maxlength="40" placeholder="例如：项目汇报 / 城市半程马拉松">
-          </div>
-          <div class="field">
-            <label for="eventType">日程类型</label>
-            <select id="eventType">
-              <option value="competition">比赛赛事</option>
-              <option value="sport">运动训练</option>
-              <option value="work">工作</option>
-              <option value="study">学习</option>
-              <option value="life">生活</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="eventDate">日期</label>
-            <input id="eventDate" type="date" required>
-          </div>
-          <div class="field">
-            <label for="startTime">开始时间</label>
-            <input id="startTime" type="time" required>
-          </div>
-          <div class="field">
-            <label for="endTime">结束时间</label>
-            <input id="endTime" type="time" required>
-          </div>
-          <div class="field full">
-            <label for="eventLocation">地点</label>
-            <input id="eventLocation" maxlength="40" placeholder="线上或具体地点">
-          </div>
-          <div class="field full">
-            <label for="eventNote">备注</label>
-            <textarea id="eventNote" maxlength="160" placeholder="准备事项、目标或其他提醒"></textarea>
-          </div>
+      <div class="modal-head"><h2 id="modalTitle">添加学习材料</h2><button class="icon-btn" id="closeModal" aria-label="关闭">✕</button></div>
+      <form id="resourceForm">
+        <div class="form">
+          <div class="field"><label for="resourceTitle">材料名称</label><input id="resourceTitle" required maxlength="70" placeholder="例如：机器学习基础教程"></div>
+          <div class="field"><label for="resourceUrl">链接地址</label><input id="resourceUrl" type="url" required placeholder="https://"></div>
+          <div class="field"><label for="resourceType">材料类型</label><select id="resourceType"><option value="article">文章</option><option value="video">视频</option><option value="course">课程</option></select></div>
+          <div class="field"><label for="resourceNote">摘要</label><textarea id="resourceNote" maxlength="150" placeholder="记录推荐理由或核心内容"></textarea></div>
+          <div class="field"><label for="resourceTags">标签</label><input id="resourceTags" maxlength="50" placeholder="用逗号分隔，如：入门, 算法"></div>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="ghost-btn delete-btn" id="deleteBtn">删除日程</button>
-          <div class="right-actions">
-            <button type="button" class="ghost-btn" id="cancelBtn">取消</button>
-            <button type="submit" class="primary-btn">保存日程</button>
-          </div>
-        </div>
+        <div class="modal-actions"><button type="button" class="outline-btn" id="cancelModal">取消</button><button type="submit" class="primary-btn">添加材料</button></div>
       </form>
     </div>
   </div>
@@ -682,254 +673,245 @@
 
   <script>
     (() => {
-      const STORAGE_KEY = "my-schedule-events-v1";
-      const typeNames = { competition: "比赛", sport: "运动", work: "工作", study: "学习", life: "生活" };
-      const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
-      const pad = n => String(n).padStart(2, "0");
-      const toDateKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const parseDate = value => {
-        const [y, m, d] = value.split("-").map(Number);
-        return new Date(y, m - 1, d);
-      };
-      const addDays = (date, days) => {
-        const next = new Date(date);
-        next.setDate(next.getDate() + days);
-        return next;
-      };
-      const startOfWeek = date => {
-        const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const day = next.getDay() || 7;
-        next.setDate(next.getDate() - day + 1);
-        return next;
-      };
-      const esc = value => String(value || "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-      }[char]));
-
-      const makeSamples = () => {
-        const monday = startOfWeek(new Date());
-        return [
-          { id: crypto.randomUUID(), title: "晨间跑步", type: "sport", date: toDateKey(addDays(monday, 0)), start: "07:00", end: "08:00", location: "滨河公园", note: "轻松跑 6 公里" },
-          { id: crypto.randomUUID(), title: "项目周会", type: "work", date: toDateKey(addDays(monday, 1)), start: "10:00", end: "11:00", location: "第三会议室", note: "同步本周关键进展" },
-          { id: crypto.randomUUID(), title: "英语学习", type: "study", date: toDateKey(addDays(monday, 2)), start: "19:30", end: "21:00", location: "家", note: "口语练习与阅读" },
-          { id: crypto.randomUUID(), title: "力量训练", type: "sport", date: toDateKey(addDays(monday, 3)), start: "18:30", end: "20:00", location: "健身房", note: "下肢与核心" },
-          { id: crypto.randomUUID(), title: "朋友晚餐", type: "life", date: toDateKey(addDays(monday, 4)), start: "19:00", end: "21:00", location: "云里餐厅", note: "" },
-          { id: crypto.randomUUID(), title: "城市羽毛球赛", type: "competition", date: toDateKey(addDays(monday, 5)), start: "09:00", end: "12:00", location: "市体育中心", note: "提前 40 分钟签到热身" },
-          { id: crypto.randomUUID(), title: "周末复盘", type: "study", date: toDateKey(addDays(monday, 6)), start: "20:00", end: "20:40", location: "家", note: "整理下周目标" }
-        ];
-      };
-
-      let events;
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        events = Array.isArray(saved) ? saved : makeSamples();
-      } catch { events = makeSamples(); }
-      let currentWeek = startOfWeek(new Date());
-      let activeFilter = "all";
-
+      const DOC_KEY = "shiguang-documents-v1";
+      const RESOURCE_KEY = "shiguang-resources-v1";
+      const uid = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
       const el = id => document.getElementById(id);
-      const modal = el("modal");
+      const esc = value => String(value || "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+      const typeNames = { article: "文章", video: "视频", course: "课程" };
+      const typeIcons = { article: "📄", video: "▶", course: "🎓" };
 
-      function save() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      const sampleDocs = [{
+        id: uid(), title: "机器学习入门笔记", icon: "🧠", favorite: true, updatedAt: Date.now(),
+        content: `<p>机器学习不是让计算机“像人一样思考”，而是让它从数据中发现规律，并对新问题作出预测。</p><blockquote>学习目标：建立完整的知识框架，而不只是记住零散概念。</blockquote><h2>一、什么是机器学习？</h2><p>传统编程由人编写规则，机器学习则通过数据训练模型。一个完整流程通常包含：</p><ul><li><b>准备数据</b> — 收集、清洗并理解数据</li><li><b>选择模型</b> — 根据任务选择合适的算法</li><li><b>训练与评估</b> — 用指标判断模型是否有效</li></ul><h2>二、核心学习路径</h2><ol><li>掌握 Python 与基础数学</li><li>理解监督学习、无监督学习</li><li>完成一个端到端的小项目</li></ol><h2>三、今日思考</h2><p>模型的价值不只取决于精度，还取决于它是否真正解决了问题。</p>`
+      }];
+      const sampleResources = [
+        { id: uid(), title: "Google 机器学习速成课程", url: "https://developers.google.com/machine-learning/crash-course", type: "course", note: "包含视频、可视化和练习的实用入门课程。", tags: ["入门", "官方课程"], favorite: true },
+        { id: uid(), title: "神经网络到底在做什么？", url: "https://www.youtube.com/watch?v=aircAruvnKk", type: "video", note: "3Blue1Brown 用直观动画解释神经网络。", tags: ["神经网络", "可视化"], favorite: false },
+        { id: uid(), title: "Scikit-learn 用户指南", url: "https://scikit-learn.org/stable/user_guide.html", type: "article", note: "常用算法、数据预处理与模型评估参考。", tags: ["Python", "工具"], favorite: false }
+      ];
+
+      function load(key, fallback) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          return Array.isArray(data) && data.length ? data : fallback;
+        } catch { return fallback; }
       }
 
-      function renderMiniCalendar() {
-        const now = new Date();
-        el("miniMonth").textContent = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
-        const first = new Date(now.getFullYear(), now.getMonth(), 1);
-        const offset = (first.getDay() + 6) % 7;
-        const start = addDays(first, -offset);
-        const labels = ["一", "二", "三", "四", "五", "六", "日"].map(d => `<span class="dow">${d}</span>`);
-        for (let i = 0; i < 35; i++) {
-          const date = addDays(start, i);
-          const classes = [
-            date.getMonth() !== now.getMonth() ? "muted-day" : "",
-            toDateKey(date) === toDateKey(now) ? "today" : ""
-          ].filter(Boolean).join(" ");
-          labels.push(`<span class="${classes}">${date.getDate()}</span>`);
-        }
-        el("miniGrid").innerHTML = labels.join("");
-      }
-
-      function renderHeader() {
-        const now = new Date();
-        const hour = now.getHours();
-        const greeting = hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好";
-        el("greeting").textContent = `${greeting}，今天也从容前进。`;
-        el("todayLabel").textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${["周日","周一","周二","周三","周四","周五","周六"][now.getDay()]}`;
-        el("profileDate").textContent = `${now.getFullYear()}年${now.getMonth() + 1}月`;
-      }
-
-      function filteredEvents() {
-        return activeFilter === "all" ? events : events.filter(event => event.type === activeFilter);
-      }
-
-      function renderWeek() {
-        const weekEnd = addDays(currentWeek, 6);
-        el("weekTitle").textContent = `${currentWeek.getMonth() + 1}月${currentWeek.getDate()}日 — ${weekEnd.getMonth() + 1}月${weekEnd.getDate()}日`;
-        const todayKey = toDateKey(new Date());
-        const visible = filteredEvents();
-        el("weekGrid").innerHTML = Array.from({ length: 7 }, (_, index) => {
-          const date = addDays(currentWeek, index);
-          const key = toDateKey(date);
-          const dayEvents = visible.filter(event => event.date === key).sort((a, b) => a.start.localeCompare(b.start));
-          return `<div class="day ${key === todayKey ? "today" : ""}">
-            <div class="day-head">
-              <div class="day-name">${weekdays[index]}</div>
-              <div class="day-number">${date.getDate()}</div>
-            </div>
-            <div class="day-events">${dayEvents.map(event => `
-              <button class="event ${event.type}" data-id="${event.id}" title="点击查看或编辑">
-                <span class="event-time">${esc(event.start)}–${esc(event.end)}</span>
-                <span class="event-title">${esc(event.title)}</span>
-                ${event.location ? `<span class="event-location">⌖ ${esc(event.location)}</span>` : ""}
-              </button>`).join("")}</div>
-          </div>`;
-        }).join("");
-
-        document.querySelectorAll(".event").forEach(button => {
-          button.addEventListener("click", () => openModal(events.find(item => item.id === button.dataset.id)));
-        });
-        renderStats();
-      }
-
-      function renderStats() {
-        const start = toDateKey(currentWeek);
-        const end = toDateKey(addDays(currentWeek, 6));
-        const weekEvents = events.filter(event => event.date >= start && event.date <= end);
-        const important = weekEvents.filter(event => event.type === "competition").length;
-        const sportMinutes = weekEvents.filter(event => event.type === "sport").reduce((sum, event) => {
-          const [sh, sm] = event.start.split(":").map(Number);
-          const [eh, em] = event.end.split(":").map(Number);
-          return sum + Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
-        }, 0);
-        el("weekCount").textContent = weekEvents.length;
-        el("importantCount").textContent = important;
-        el("sportHours").textContent = (sportMinutes / 60).toFixed(sportMinutes % 60 ? 1 : 0);
-        el("weekHint").textContent = weekEvents.length > 7 ? "忙碌的一周，记得留出休息时间" : "张弛有度，保持自己的节奏";
-        el("navCount").textContent = events.length;
-      }
-
-      function renderUpcoming() {
-        const today = toDateKey(new Date());
-        const lastDay = toDateKey(addDays(new Date(), 7));
-        const next = events
-          .filter(event => event.date >= today && event.date <= lastDay)
-          .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))
-          .slice(0, 5);
-        el("upcoming").innerHTML = next.length ? next.map(event => {
-          const date = parseDate(event.date);
-          return `<article class="upcoming-card">
-            <div class="date-box">${date.getMonth() + 1}月<strong>${date.getDate()}</strong></div>
-            <div class="upcoming-info">
-              <div class="upcoming-type">${typeNames[event.type]}</div>
-              <h4>${esc(event.title)}</h4>
-              <p>${esc(event.start)} · ${esc(event.location || "地点待定")}</p>
-            </div>
-          </article>`;
-        }).join("") : `<div class="empty">未来 7 天暂无安排<br>给自己留一点自由时间吧</div>`;
-      }
-
-      function renderAll() {
-        renderWeek();
-        renderUpcoming();
-      }
-
-      function setFilter(filter) {
-        activeFilter = filter;
-        document.querySelectorAll(".filter").forEach(button => button.classList.toggle("active", button.dataset.filter === filter));
-        renderWeek();
-      }
-
-      function openModal(event = null, presetDate = null) {
-        el("eventForm").reset();
-        el("eventId").value = event?.id || "";
-        el("modalTitle").textContent = event ? "编辑日程" : "添加新日程";
-        el("deleteBtn").classList.toggle("show", Boolean(event));
-        if (event) {
-          el("eventTitle").value = event.title;
-          el("eventType").value = event.type;
-          el("eventDate").value = event.date;
-          el("startTime").value = event.start;
-          el("endTime").value = event.end;
-          el("eventLocation").value = event.location || "";
-          el("eventNote").value = event.note || "";
-        } else {
-          el("eventDate").value = presetDate || toDateKey(new Date());
-          el("startTime").value = "09:00";
-          el("endTime").value = "10:00";
-        }
-        modal.classList.add("open");
-        setTimeout(() => el("eventTitle").focus(), 100);
-      }
-
-      function closeModal() {
-        modal.classList.remove("open");
-      }
-
+      let docs = load(DOC_KEY, sampleDocs);
+      let resources = load(RESOURCE_KEY, sampleResources);
+      let currentDoc = docs[0];
+      let activeTab = "all";
+      let activeDocView = "all";
+      let dirty = false;
       let toastTimer;
+
+      function persist() {
+        localStorage.setItem(DOC_KEY, JSON.stringify(docs));
+        localStorage.setItem(RESOURCE_KEY, JSON.stringify(resources));
+      }
+
       function toast(message) {
         el("toast").textContent = message;
         el("toast").classList.add("show");
         clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => el("toast").classList.remove("show"), 2200);
+        toastTimer = setTimeout(() => el("toast").classList.remove("show"), 1900);
       }
 
-      el("eventForm").addEventListener("submit", event => {
+      function updateCounts() {
+        el("docCount").textContent = docs.length;
+        el("favoriteCount").textContent = docs.filter(item => item.favorite).length;
+        el("resourceCount").textContent = resources.length;
+      }
+
+      function renderDocList() {
+        const term = el("searchInput").value.trim().toLowerCase();
+        let visible = docs.filter(doc => !term || `${doc.title} ${doc.content.replace(/<[^>]+>/g, " ")}`.toLowerCase().includes(term));
+        if (activeDocView === "favorite") visible = visible.filter(doc => doc.favorite);
+        if (activeDocView === "recent") visible = [...visible].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 6);
+        el("docList").innerHTML = visible.length ? visible.map(doc => `
+          <button class="nav-item ${doc.id === currentDoc.id ? "active" : ""}" data-doc-id="${doc.id}">
+            <span class="emoji">${esc(doc.icon || "📝")}</span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(doc.title)}</span>
+            ${doc.favorite ? `<span class="count" style="color:#f5a623">★</span>` : ""}
+          </button>`).join("") : `<div class="empty">暂无匹配文档</div>`;
+        document.querySelectorAll("[data-doc-id]").forEach(button => button.addEventListener("click", () => {
+          if (dirty) saveDoc(false);
+          currentDoc = docs.find(doc => doc.id === button.dataset.docId);
+          renderDoc();
+          renderDocList();
+        }));
+      }
+
+      function renderDoc() {
+        el("titleInput").value = currentDoc.title;
+        el("editor").innerHTML = currentDoc.content;
+        el("docIcon").textContent = currentDoc.icon || "📝";
+        el("crumbTitle").textContent = currentDoc.title;
+        el("favoriteDoc").textContent = currentDoc.favorite ? "★" : "☆";
+        el("favoriteDoc").style.color = currentDoc.favorite ? "#f5a623" : "";
+        el("updatedAt").textContent = "刚刚更新";
+        dirty = false;
+      }
+
+      function saveDoc(showToast = true) {
+        currentDoc.title = el("titleInput").value.trim() || "无标题文档";
+        currentDoc.content = el("editor").innerHTML;
+        currentDoc.updatedAt = Date.now();
+        el("titleInput").value = currentDoc.title;
+        el("crumbTitle").textContent = currentDoc.title;
+        el("saveStatus").textContent = "所有更改已保存";
+        dirty = false;
+        persist();
+        renderDocList();
+        if (showToast) toast("文档已保存");
+      }
+
+      function renderResources() {
+        const term = el("searchInput").value.trim().toLowerCase();
+        const visible = resources.filter(item => {
+          const tabMatch = activeTab === "all" || item.type === activeTab;
+          const text = `${item.title} ${item.note} ${item.tags.join(" ")}`.toLowerCase();
+          return tabMatch && (!term || text.includes(term));
+        });
+        el("resourceList").innerHTML = visible.length ? visible.map(item => `
+          <article class="resource-card">
+            <button class="star ${item.favorite ? "active" : ""}" data-star="${item.id}" aria-label="收藏">${item.favorite ? "★" : "☆"}</button>
+            <a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">
+              <div class="resource-type"><span class="type-icon">${typeIcons[item.type]}</span>${typeNames[item.type]}</div>
+              <h3>${esc(item.title)}</h3>
+              <p>${esc(item.note || "点击打开并开始学习")}</p>
+              <div class="tags">${item.tags.map(tag => `<span class="tag"># ${esc(tag)}</span>`).join("")}</div>
+            </a>
+          </article>`).join("") : `<div class="empty">没有找到相关材料<br>试试其他关键词吧</div>`;
+        document.querySelectorAll("[data-star]").forEach(button => button.addEventListener("click", event => {
+          event.preventDefault();
+          const item = resources.find(resource => resource.id === button.dataset.star);
+          item.favorite = !item.favorite;
+          persist();
+          renderResources();
+          updateCounts();
+        }));
+      }
+
+      function newDocument() {
+        if (dirty) saveDoc(false);
+        const doc = { id: uid(), title: "无标题文档", icon: "📝", favorite: false, updatedAt: Date.now(), content: "<h2>开始记录</h2><p><br></p>" };
+        docs.unshift(doc);
+        currentDoc = doc;
+        persist();
+        renderDoc();
+        renderDocList();
+        updateCounts();
+        el("titleInput").focus();
+        el("titleInput").select();
+        toast("已创建新文档");
+      }
+
+      function openModal() {
+        el("resourceForm").reset();
+        el("resourceModal").classList.add("open");
+        setTimeout(() => el("resourceTitle").focus(), 80);
+      }
+
+      function closeModal() { el("resourceModal").classList.remove("open"); }
+      function markDirty() {
+        dirty = true;
+        el("saveStatus").textContent = "正在编辑…";
+      }
+
+      el("saveBtn").addEventListener("click", () => saveDoc());
+      el("titleInput").addEventListener("input", markDirty);
+      el("editor").addEventListener("input", markDirty);
+      el("newDoc").addEventListener("click", newDocument);
+      el("sideNew").addEventListener("click", newDocument);
+      el("mobileNew").addEventListener("click", newDocument);
+      el("favoriteDoc").addEventListener("click", () => {
+        currentDoc.favorite = !currentDoc.favorite;
+        persist();
+        renderDoc();
+        renderDocList();
+        updateCounts();
+        toast(currentDoc.favorite ? "已收藏文档" : "已取消收藏");
+      });
+
+      document.querySelectorAll(".tool[data-command]").forEach(button => button.addEventListener("mousedown", event => {
         event.preventDefault();
-        const start = el("startTime").value;
-        const end = el("endTime").value;
-        if (end <= start) {
-          toast("结束时间需要晚于开始时间");
-          return;
+        document.execCommand(button.dataset.command, false, button.dataset.value || null);
+        el("editor").focus();
+        markDirty();
+      }));
+      el("linkTool").addEventListener("mousedown", event => {
+        event.preventDefault();
+        const url = prompt("请输入链接地址：", "https://");
+        if (url && /^https?:\/\//i.test(url)) {
+          document.execCommand("createLink", false, url);
+          markDirty();
         }
-        const data = {
-          id: el("eventId").value || crypto.randomUUID(),
-          title: el("eventTitle").value.trim(),
-          type: el("eventType").value,
-          date: el("eventDate").value,
-          start,
-          end,
-          location: el("eventLocation").value.trim(),
-          note: el("eventNote").value.trim()
-        };
-        const index = events.findIndex(item => item.id === data.id);
-        if (index >= 0) events[index] = data;
-        else events.push(data);
-        save();
-        closeModal();
-        currentWeek = startOfWeek(parseDate(data.date));
-        renderAll();
-        toast(index >= 0 ? "日程已更新" : "日程已添加");
       });
 
-      el("deleteBtn").addEventListener("click", () => {
-        const id = el("eventId").value;
-        if (!id || !confirm("确定删除这项日程吗？")) return;
-        events = events.filter(event => event.id !== id);
-        save();
-        closeModal();
-        renderAll();
-        toast("日程已删除");
+      document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
+        activeTab = button.dataset.tab;
+        document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab === button));
+        renderResources();
+      }));
+      el("searchInput").addEventListener("input", () => {
+        renderDocList();
+        renderResources();
       });
-
-      el("addBtn").addEventListener("click", () => openModal());
-      el("mobileAdd").addEventListener("click", () => openModal());
+      document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => {
+        activeDocView = button.dataset.view;
+        document.querySelectorAll("[data-view]").forEach(item => item.classList.toggle("active", item === button));
+        renderDocList();
+      }));
+      el("addResource").addEventListener("click", openModal);
       el("closeModal").addEventListener("click", closeModal);
-      el("cancelBtn").addEventListener("click", closeModal);
-      modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
-      document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
-      el("prevWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, -7); renderWeek(); });
-      el("nextWeek").addEventListener("click", () => { currentWeek = addDays(currentWeek, 7); renderWeek(); });
-      el("todayBtn").addEventListener("click", () => { currentWeek = startOfWeek(new Date()); renderWeek(); });
-      document.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filter)));
-      document.querySelectorAll("[data-filter-link]").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filterLink)));
+      el("cancelModal").addEventListener("click", closeModal);
+      el("resourceModal").addEventListener("click", event => { if (event.target === el("resourceModal")) closeModal(); });
+      el("resourceForm").addEventListener("submit", event => {
+        event.preventDefault();
+        resources.unshift({
+          id: uid(),
+          title: el("resourceTitle").value.trim(),
+          url: el("resourceUrl").value.trim(),
+          type: el("resourceType").value,
+          note: el("resourceNote").value.trim(),
+          tags: el("resourceTags").value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean),
+          favorite: false
+        });
+        persist();
+        closeModal();
+        activeTab = "all";
+        document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.tab === "all"));
+        renderResources();
+        updateCounts();
+        toast("学习材料已添加");
+      });
 
-      renderHeader();
-      renderMiniCalendar();
-      renderAll();
-      if (!localStorage.getItem(STORAGE_KEY)) save();
+      function toggleResources() { el("resources").classList.toggle("open"); }
+      el("toggleResources").addEventListener("click", toggleResources);
+      el("mobileResources").addEventListener("click", toggleResources);
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          closeModal();
+          el("resources").classList.remove("open");
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          saveDoc();
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+          event.preventDefault();
+          el("searchInput").focus();
+        }
+      });
+      window.addEventListener("beforeunload", () => { if (dirty) saveDoc(false); });
+
+      renderDoc();
+      renderDocList();
+      renderResources();
+      updateCounts();
+      persist();
     })();
   </script>
 </body>

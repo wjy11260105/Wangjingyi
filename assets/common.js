@@ -181,7 +181,7 @@
         dashboard: "总览", goals: "目标", schedule: "日程", training: "训练",
         habits: "习惯", fragments: "碎片", reading: "学习", travel: "清单", assets: "物品", mystic: "玄学"
       };
-      const canonical = ["dashboard", "goals", "schedule", "training", "habits", "fragments", "reading", "travel", "assets", "mystic"];
+      const canonical = ["dashboard", "goals", "schedule", "habits", "training", "fragments", "reading", "travel", "assets", "mystic"];
       const names = canonical.filter(name => App.views[name])
         .concat(App.order.filter(name => !canonical.includes(name)));
       document.getElementById("mobileTabs").innerHTML = names

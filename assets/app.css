@@ -60,7 +60,6 @@ svg { display: block; }
   color: white;
   background: var(--green);
   border-radius: 11px;
-  transform: rotate(-3deg);
 }
 .nav-label, .section-label {
   margin: 18px 10px 9px;

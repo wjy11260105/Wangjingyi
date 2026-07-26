@@ -12,12 +12,12 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
         </span>
         人生管理
       </div>
-      <p class="nav-label">观测</p>
-      <nav class="nav" aria-label="主导航">
+      <p class="nav-label">总览</p>
+      <nav class="nav" aria-label="总览导航">
         <button class="nav-item" data-nav="dashboard">
           <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="6" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="11" width="8" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="15" width="8" height="6" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
           人生总览
@@ -27,27 +27,27 @@
           目标管理
         </button>
       </nav>
-      <p class="nav-label">日常</p>
-      <nav class="nav" aria-label="日常导航">
+      <p class="nav-label">计划与行动</p>
+      <nav class="nav" aria-label="计划与行动导航">
         <button class="nav-item" data-nav="schedule">
           <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 2v4M16 2v4M3 9h18" stroke="currentColor" stroke-width="1.8"/></svg>
           我的日程 <span class="nav-count" id="navCountSchedule">0</span>
-        </button>
-        <button class="nav-item" data-nav="training">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12M4 5v4M20 5v4M8 12h8M6 10v4M18 10v4M6 17h12M4 15v4M20 15v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          训练记录
         </button>
         <button class="nav-item" data-nav="habits">
           <svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.8"/></svg>
           习惯打卡
         </button>
+        <button class="nav-item" data-nav="training">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12M4 5v4M20 5v4M8 12h8M6 10v4M18 10v4M6 17h12M4 15v4M20 15v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          训练记录
+        </button>
+      </nav>
+      <p class="nav-label">成长与记录</p>
+      <nav class="nav" aria-label="成长与记录导航">
         <button class="nav-item" data-nav="fragments">
           <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h10a2 2 0 0 1 2 2v14l-7-3-7 3V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 7h6M9 10h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           碎片记录
         </button>
-      </nav>
-      <p class="nav-label">体验</p>
-      <nav class="nav" aria-label="体验导航">
         <button class="nav-item" data-nav="reading">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 6c-2-1.6-4.5-2-8-2v14c3.5 0 6 .4 8 2 2-1.6 4.5-2 8-2V4c-3.5 0-6 .4-8 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 6v14" stroke="currentColor" stroke-width="1.8"/></svg>
           学习档案
@@ -56,6 +56,9 @@
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg>
           人生清单
         </button>
+      </nav>
+      <p class="nav-label">生活与自我</p>
+      <nav class="nav" aria-label="生活与自我导航">
         <button class="nav-item" data-nav="assets">
           <svg viewBox="0 0 24 24" fill="none"><path d="M4 8h16v11H4V8Z" stroke="currentColor" stroke-width="1.8"/><path d="M8 8V5h8v3M4 12h16M10 12v2h4v-2" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
           物品与账户

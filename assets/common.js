@@ -179,7 +179,7 @@
     renderMobileTabs() {
       const labels = {
         dashboard: "总览", goals: "目标", schedule: "日程", training: "训练",
-        habits: "习惯", reading: "阅读", travel: "旅行", mystic: "玄学"
+        habits: "习惯", reading: "阅读", travel: "清单", mystic: "玄学"
       };
       const canonical = ["dashboard", "goals", "schedule", "training", "habits", "reading", "travel", "mystic"];
       const names = canonical.filter(name => App.views[name])

@@ -7,7 +7,11 @@
   const getWorkouts = () => Store.get("life-workouts-v1", []);
   const getHabits = () => Store.get("life-habits-v1", []);
   const getBooks = () => Store.get("life-books-v1", []);
-  const getTrips = () => Store.get("life-trips-v1", []);
+  const getLifeItems = () => Store.get("life-trips-v1", []).map(item => ({
+    ...item,
+    title: item.title || item.place || "未命名事项",
+    status: item.status === "wish" ? "idea" : item.status
+  }));
 
   /* 每日活跃度 = 训练次数 + 习惯打卡数 + 已完成日程数 */
   function activityMap() {
@@ -48,7 +52,7 @@
     const workouts = getWorkouts();
     const habits = getHabits();
     const books = getBooks();
-    const trips = getTrips();
+    const lifeItems = getLifeItems();
     const todayBazi = Lunar.bazi(
       now.getFullYear(),
       now.getMonth() + 1,
@@ -74,7 +78,7 @@
       .slice(0, 5);
 
     const reading = books.filter(book => book.status === "reading");
-    const wishTrips = trips.filter(trip => trip.status === "wish");
+    const futureItems = lifeItems.filter(item => ["idea", "planned", "active"].includes(item.status));
 
     root.innerHTML = `
       <header class="topbar">
@@ -161,8 +165,8 @@
             <div class="overview-list">
               <div class="overview-item"><span class="oi-icon">📖</span><span class="oi-main">${reading.length ? `在读《${esc(reading[0].title)}》 ${reading[0].progress || 0}%` : "书架上还没有在读的书"}</span></div>
               <div class="overview-item"><span class="oi-icon">🏃</span><span class="oi-main">累计训练 ${workouts.length} 次</span></div>
-              <div class="overview-item"><span class="oi-icon">✈️</span><span class="oi-main">${wishTrips.length ? `旅行心愿：${esc(wishTrips[0].place)}${wishTrips.length > 1 ? ` 等 ${wishTrips.length} 个` : ""}` : "写下想去的地方吧"}</span></div>
-              <div class="overview-item"><span class="oi-icon">📍</span><span class="oi-main">去过 ${trips.filter(trip => trip.status === "done").length} 个地方</span></div>
+              <div class="overview-item"><span class="oi-icon">✨</span><span class="oi-main">${futureItems.length ? `想做：${esc(futureItems[0].title)}${futureItems.length > 1 ? ` 等 ${futureItems.length} 件` : ""}` : "写下下一件想做的事吧"}</span></div>
+              <div class="overview-item"><span class="oi-icon">🏆</span><span class="oi-main">人生清单累计完成 ${lifeItems.filter(item => item.status === "done").length} 件</span></div>
             </div>
           </section>
         </div>

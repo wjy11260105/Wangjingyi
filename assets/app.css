@@ -660,24 +660,54 @@ h2.block-title {
 .book-card .author { color: #969d98; font-size: 11px; }
 .book-note { color: #79817b; font-size: 11px; line-height: 1.6; white-space: pre-wrap; }
 .stars { color: #d9a13f; letter-spacing: 2px; font-size: 12px; }
-.trip-card {
+.life-list-grid {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 13px;
+}
+.life-list-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
-  padding: 16px 18px;
+  min-height: 190px;
+  padding: 17px;
   border: 1px solid var(--line);
-  border-radius: 15px;
+  border-radius: 16px;
   background: #fff;
   cursor: pointer;
   text-align: left;
-  width: 100%;
   transition: .2s;
 }
-.trip-card:hover { border-color: #c6cdc7; box-shadow: 0 8px 18px rgba(30,46,38,.07); }
-.trip-card h4 { margin: 0 0 4px; font-size: 14px; }
-.trip-card .trip-sub { color: #969d98; font-size: 11px; }
-.trip-card .trip-note { margin-top: 8px; color: #79817b; font-size: 11px; line-height: 1.6; white-space: pre-wrap; }
-.trip-list { display: grid; gap: 10px; }
+.life-list-card:hover { transform: translateY(-2px); border-color: #b8c4bc; box-shadow: 0 10px 24px rgba(30,46,38,.08); }
+.life-list-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.life-list-category { color: #68736b; font-size: 10px; font-weight: 700; }
+.life-list-card > strong { font-size: 14px; line-height: 1.45; }
+.life-list-card > p { margin: 0; color: #7e8881; font-size: 11px; line-height: 1.6; }
+.life-list-meta { display: flex; flex-wrap: wrap; gap: 7px 12px; color: #9aa19b; font-size: 9px; }
+.life-next-action {
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: #3b5e4b;
+  background: var(--green-light);
+  font-size: 11px;
+}
+.life-next-action small { color: #7c9988; font-size: 8px; font-weight: 800; letter-spacing: .8px; }
+.life-check-progress { display: flex; align-items: center; gap: 8px; }
+.life-check-progress .progress { flex: 1; }
+.life-check-progress small { color: #929a94; font-size: 9px; }
+.life-result {
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  color: #717c74;
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
 
 /* ---------- 玄学空间 ---------- */
 .mystic-profile {

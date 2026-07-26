@@ -6,6 +6,7 @@
   const getGoals = () => Store.get("life-goals-v1", []);
   const getWorkouts = () => Store.get("life-workouts-v1", []);
   const getHabits = () => Store.get("life-habits-v1", []);
+  const getFragments = () => Store.get("life-fragments-v1", []);
   const getBooks = () => Store.get("life-books-v1", []);
   const getLifeItems = () => Store.get("life-trips-v1", []).map(item => ({
     ...item,
@@ -13,13 +14,17 @@
     status: item.status === "wish" ? "idea" : item.status
   }));
 
-  /* 每日活跃度 = 训练次数 + 习惯打卡数 + 已完成日程数 */
+  /* 每日活跃度 = 训练次数 + 习惯打卡数 + 已完成日程数 + 碎片记录 */
   function activityMap() {
     const map = {};
     const bump = (key, n = 1) => { map[key] = (map[key] || 0) + n; };
     getWorkouts().forEach(item => bump(item.date));
     getHabits().forEach(habit => Object.keys(habit.checks || {}).forEach(key => bump(key)));
     getEvents().forEach(event => { if (event.done) bump(event.date); });
+    getFragments().forEach(item => {
+      const key = item.date || (item.createdAt || "").slice(0, 10);
+      if (key) bump(key);
+    });
     return map;
   }
 
@@ -38,7 +43,7 @@
       cells.push(`<i class="${level}" title="${key} · ${count} 项活跃"></i>`);
     }
     return `<div class="heatmap-wrap"><div class="heatmap">${cells.join("")}</div></div>
-      <div class="heatmap-legend">少 <i></i><i class="l1" style="background:#cfe3d6"></i><i class="l2" style="background:#8fbfa2"></i><i class="l3" style="background:#4c8465"></i><i class="l4" style="background:#244f3d"></i> 多 · 训练 / 打卡 / 完成日程</div>`;
+      <div class="heatmap-legend">少 <i></i><i class="l1" style="background:#cfe3d6"></i><i class="l2" style="background:#8fbfa2"></i><i class="l3" style="background:#4c8465"></i><i class="l4" style="background:#244f3d"></i> 多 · 训练 / 打卡 / 日程 / 碎片</div>`;
   }
 
   function render(root) {
@@ -51,6 +56,7 @@
     const goals = getGoals().filter(goal => goal.status === "active");
     const workouts = getWorkouts();
     const habits = getHabits();
+    const fragments = getFragments();
     const books = getBooks();
     const lifeItems = getLifeItems();
     const todayBazi = Lunar.bazi(
@@ -163,6 +169,7 @@
           <section class="panel">
             <div class="panel-head"><h3>生活切片</h3></div>
             <div class="overview-list">
+              <div class="overview-item"><span class="oi-icon">💭</span><span class="oi-main">碎片收件箱 ${fragments.filter(item => !item.organized).length} 条待整理</span></div>
               <div class="overview-item"><span class="oi-icon">🎓</span><span class="oi-main">${learning.length ? `正在学习：${esc(learning[0].title)} ${learning[0].progress || 0}%` : "还没有进行中的学习项目"}</span></div>
               <div class="overview-item"><span class="oi-icon">🏃</span><span class="oi-main">累计训练 ${workouts.length} 次</span></div>
               <div class="overview-item"><span class="oi-icon">✨</span><span class="oi-main">${futureItems.length ? `想做：${esc(futureItems[0].title)}${futureItems.length > 1 ? ` 等 ${futureItems.length} 件` : ""}` : "写下下一件想做的事吧"}</span></div>

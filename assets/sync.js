@@ -9,6 +9,7 @@
     "life-goals-v1",
     "life-workouts-v1",
     "life-habits-v1",
+    "life-fragments-v1",
     "life-books-v1",
     "life-trips-v1",
     "life-birth-v1",
@@ -341,7 +342,7 @@
           <span class="sync-connected">已登录</span>
         </div>
         <div class="field full">
-          <div class="sync-detail"><span>同步内容</span><b>日程、目标、训练、习惯、学习档案、人生清单、命盘记录</b></div>
+          <div class="sync-detail"><span>同步内容</span><b>日程、目标、训练、习惯、碎片、学习档案、人生清单、命盘记录</b></div>
           <div class="sync-detail"><span>上次同步</span><b>${meta.updatedAt ? new Date(meta.updatedAt).toLocaleString("zh-CN") : "准备同步"}</b></div>
         </div>
         <div class="field full">

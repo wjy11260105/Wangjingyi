@@ -8,6 +8,7 @@
   const getHabits = () => Store.get("life-habits-v1", []);
   const getFragments = () => Store.get("life-fragments-v1", []);
   const getBooks = () => Store.get("life-books-v1", []);
+  const getItems = () => Store.get("life-items-v1", []);
   const getLifeItems = () => Store.get("life-trips-v1", []).map(item => ({
     ...item,
     title: item.title || item.place || "未命名事项",
@@ -58,6 +59,7 @@
     const habits = getHabits();
     const fragments = getFragments();
     const books = getBooks();
+    const items = getItems();
     const lifeItems = getLifeItems();
     const todayBazi = Lunar.bazi(
       now.getFullYear(),
@@ -174,6 +176,7 @@
               <div class="overview-item"><span class="oi-icon">🏃</span><span class="oi-main">累计训练 ${workouts.length} 次</span></div>
               <div class="overview-item"><span class="oi-icon">✨</span><span class="oi-main">${futureItems.length ? `想做：${esc(futureItems[0].title)}${futureItems.length > 1 ? ` 等 ${futureItems.length} 件` : ""}` : "写下下一件想做的事吧"}</span></div>
               <div class="overview-item"><span class="oi-icon">🏆</span><span class="oi-main">人生清单累计完成 ${lifeItems.filter(item => item.status === "done").length} 件</span></div>
+              <div class="overview-item"><span class="oi-icon">📦</span><span class="oi-main">已建立 ${items.length} 件物品档案</span></div>
             </div>
           </section>
         </div>

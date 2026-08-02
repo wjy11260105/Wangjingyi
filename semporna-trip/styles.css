@@ -98,6 +98,7 @@ a { color: inherit; text-decoration: none; }
 .card-head h3, .panel-head h3 { margin: 0; font-family: Georgia,"Songti SC",serif; font-size: 16px; font-weight: 550; }
 .card-head a, .panel-head a { color: var(--teal); font-size: 8px; font-weight: 750; }
 .tag { display: inline-flex; padding: 4px 8px; border-radius: 9px; color: var(--teal); background: var(--teal-soft); font-size: 7px; font-weight: 800; }
+.location-tag { display:inline-flex; margin-left:6px; color:var(--muted); font-size:8px; }
 .list { display: grid; gap: 9px; }
 .item-card { position: relative; padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: #fff; cursor: pointer; transition: .18s; }
 .item-card:hover { border-color: #b9d0cb; transform: translateY(-1px); box-shadow: 0 7px 18px rgba(17,61,56,.05); }

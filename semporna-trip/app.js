@@ -519,7 +519,7 @@
   function wishCard(item) {
     const done = item.status === "done";
     return `<article class="item-card check-row">
-      <div data-edit="${item.id}">${tag(item.category)}<h4>${esc(item.title)}</h4><p>${esc(item.details)}</p></div>
+      <div data-edit="${item.id}">${tag(item.category)}${item.metadata?.location ? `<span class="location-tag">⌖ ${esc(item.metadata.location)}</span>` : ""}<h4>${esc(item.title)}</h4><p>${esc(item.details)}</p></div>
       <button class="check ${done ? "done" : ""}" data-toggle="${item.id}">✓</button>
     </article>`;
   }
@@ -630,7 +630,7 @@
     ]},
     wish: { title: "旅行打卡", kicker: "CHECK-IN LIST", fields: [
       ["title", "打卡项目", "text", true], ["category", "分类", "select", true, [["food","必吃"],["shopping","必买"],["experience","体验"],["photo","拍照"],["learning","学习"]]],
-      ["details", "推荐理由或提醒", "textarea"], ["status", "状态", "select", true, [["pending","待打卡"],["done","已完成"]]]
+      ["location", "地点", "text"], ["details", "推荐理由或提醒", "textarea"], ["status", "状态", "select", true, [["pending","待打卡"],["done","已完成"]]]
     ]},
     learning: { title: "每日学习", kicker: "LEARNING", fields: [
       ["trip_date", "日期", "date", true], ["title", "学习主题", "text", true], ["details", "学到的内容", "textarea", true],
@@ -659,6 +659,7 @@
     let value = item?.[name] ?? "";
     if (name === "takeaway") value = item?.metadata?.takeaway || "";
     if (name === "mood") value = item?.metadata?.mood || "3";
+    if (name === "location") value = item?.metadata?.location || "";
     const full = type === "textarea";
     if (type === "select") return `<label class="field"><span>${label}</span><select name="${name}" ${required ? "required" : ""}>${optionMarkup(values, value)}</select></label>`;
     if (type === "textarea") return `<label class="field ${full ? "full" : ""}"><span>${label}</span><textarea name="${name}" ${required ? "required" : ""}>${esc(value)}</textarea></label>`;
@@ -687,14 +688,20 @@
   }
   function readForm(type) {
     const data = Object.fromEntries(new FormData($("#itemForm")).entries());
+    const existing = $("#itemId").value ? store.get($("#itemId").value) : null;
+    const existingMetadata = existing?.metadata || {};
     if (data.amount) data.amount = Number(data.amount);
     if (type === "learning") {
-      data.metadata = { takeaway: data.takeaway || "" };
+      data.metadata = { ...existingMetadata, takeaway: data.takeaway || "" };
       delete data.takeaway;
     }
     if (type === "reflection") {
-      data.metadata = { mood: Number(data.mood || 3) };
+      data.metadata = { ...existingMetadata, mood: Number(data.mood || 3) };
       delete data.mood;
+    }
+    if (type === "wish") {
+      data.metadata = { ...existingMetadata, location: data.location || "" };
+      delete data.location;
     }
     return data;
   }

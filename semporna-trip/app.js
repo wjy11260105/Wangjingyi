@@ -32,7 +32,7 @@
   };
   const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const routeTitles = {
-    overview: "旅行总览", itinerary: "每日行程", wishlist: "想做的事",
+    overview: "旅行总览", itinerary: "每日行程", wishlist: "旅行打卡",
     journal: "学习与感悟", knowledge: "旅行知识", budget: "预算支出", checklist: "行前清单"
   };
   const categoryNames = {
@@ -45,6 +45,7 @@
   const tripDays = Array.from({ length: 9 }, (_, index) => addDays(START_DATE, index));
   let selectedDate = dateKey(START_DATE);
   let journalTab = "learning";
+  let wishTab = "all";
   let currentRoute = "overview";
   let cnyToMyrRate = Number(localStorage.getItem("semporna-cny-myr-rate")) || 0.60417;
   let exchangeRateDate = localStorage.getItem("semporna-rate-date") || "参考汇率";
@@ -392,6 +393,26 @@
         created_at: nowIso(), updated_at: nowIso(), deleted_at: null
       });
     });
+    const recommendations = [
+      ["26081500-0000-4000-8000-000000000041", "仙本那海鲜晚餐", "food", "石斑、老虎虾、螃蟹等按当天供应选择；点单前确认时价、重量和做法。"],
+      ["26081500-0000-4000-8000-000000000042", "奶油老虎虾", "food", "沙巴常见的浓香做法，也可以询问咸蛋黄或清蒸口味。"],
+      ["26081500-0000-4000-8000-000000000043", "椰浆饭 Nasi Lemak", "food", "马来西亚经典早餐，通常搭配参巴酱、小鱼干、花生与鸡蛋。"],
+      ["26081500-0000-4000-8000-000000000044", "沙巴生肉面", "food", "沙巴代表性面食之一，可选择干捞或汤面。"],
+      ["26081500-0000-4000-8000-000000000045", "拉茶 Teh Tarik", "food", "经典马来西亚饮品，正常甜度较高，可以要求 kurang manis（少甜）。"],
+      ["26081500-0000-4000-8000-000000000046", "新鲜椰子或椰子布丁", "food", "跳岛后补水打卡，购买前留意保存条件。"],
+      ["26081500-0000-4000-8000-000000000051", "沙巴白咖啡", "shopping", "适合作为伴手礼，购买前查看糖分和生产日期。"],
+      ["26081500-0000-4000-8000-000000000052", "沙巴茶或当地可可", "shopping", "选择密封包装，确认回国携带要求。"],
+      ["26081500-0000-4000-8000-000000000053", "当地手工艺品", "shopping", "优先选择社区制作的正规商品，不购买珊瑚、贝壳或野生动物制品。"],
+      ["26081500-0000-4000-8000-000000000054", "潜水日志印章或纪念品", "shopping", "在潜店完成日志并挑选一件轻便纪念品。"]
+    ];
+    recommendations.forEach(([id, title, category, details], index) => {
+      if (store.get(id)) return;
+      store.items.push({
+        id, item_type: "wish", trip_date: null, start_time: null, title, details, category,
+        status: "pending", amount: null, currency: "CNY", sort_order: 10 + index,
+        metadata: { source: "local-recommendation" }, created_at: nowIso(), updated_at: nowIso(), deleted_at: null
+      });
+    });
     store.save();
     localStorage.setItem(migrationKey, "done");
   }
@@ -506,15 +527,34 @@
   function wishlistView() {
     const rows = list("wish").sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
     const done = rows.filter(item => item.status === "done").length;
+    const groupOf = item => item.category === "food" ? "food" : item.category === "shopping" ? "shopping" : "experience";
+    const groups = [
+      ["food", "必吃推荐", "在点单前确认价格、重量和辣度"],
+      ["shopping", "必买推荐", "选择轻便、正规和对环境友好的伴手礼"],
+      ["experience", "体验打卡", "保留真正想体验和记住的瞬间"]
+    ];
+    const visibleGroups = groups.filter(([key]) => wishTab === "all" || wishTab === key);
     return `
-      <div class="toolbar"><div><h2 class="view-title">想做的事</h2><p>不必全部完成，重要的是记住自己为何期待这段旅行。</p></div><button class="primary-button" data-add="wish">＋ 新愿望</button></div>
+      <div class="toolbar"><div><h2 class="view-title">旅行打卡</h2><p>把想吃、想买和想体验的项目列成清单，完成后逐项打勾。</p></div><button class="primary-button" data-add="wish">＋ 新打卡</button></div>
       <section class="metrics">
-        ${metric("☆", "旅行愿望", rows.length, "持续收集期待")}
-        ${metric("✓", "已经实现", done, "在旅途中逐一打勾")}
+        ${metric("☆", "打卡项目", rows.length, "必吃、必买和体验")}
+        ${metric("✓", "已经完成", done, "在旅途中逐一打勾")}
         ${metric("○", "待完成", rows.length - done, "允许计划发生变化")}
         ${metric("↗", "完成比例", rows.length ? `${Math.round(done / rows.length * 100)}%` : "0%", "旅程结束后回看")}
       </section>
-      <section class="card"><div class="list">${rows.length ? rows.map(wishCard).join("") : empty("☆", "还没有旅行愿望", "写下第一件在仙本那想做的事")}</div></section>`;
+      <div class="tabs">
+        ${[["all","全部"],["food","必吃"],["shopping","必买"],["experience","体验"]].map(([key, label]) =>
+          `<button class="tab ${wishTab === key ? "active" : ""}" data-wish-tab="${key}">${label}</button>`).join("")}
+      </div>
+      <div class="recommendation-groups">
+        ${visibleGroups.map(([key, title, copy]) => {
+          const items = rows.filter(item => groupOf(item) === key);
+          return `<section class="card">
+            <div class="card-head"><div><h3>${title}</h3><p class="group-copy">${copy}</p></div><span class="tag">${items.filter(item => item.status === "done").length}/${items.length}</span></div>
+            <div class="list">${items.length ? items.map(wishCard).join("") : empty("☆", `暂无${title}`, "可以添加自己的旅行推荐")}</div>
+          </section>`;
+        }).join("")}
+      </div>`;
   }
 
   function journalView() {
@@ -637,9 +677,9 @@
       ["category", "类型", "select", true, [["transport","交通"],["stay","住宿"],["diving","潜水"],["island","跳岛"],["food","美食"],["free","自由活动"]]],
       ["details", "行程说明", "textarea"], ["status", "状态", "select", true, [["pending","待确认"],["booked","已预订"],["done","已完成"]]]
     ]},
-    wish: { title: "想做的事", kicker: "WISH LIST", fields: [
-      ["title", "想做什么", "text", true], ["category", "类型", "select", true, [["experience","体验"],["photo","拍照"],["learning","学习"],["food","美食"],["shopping","购物"]]],
-      ["details", "为什么期待", "textarea"], ["status", "状态", "select", true, [["pending","想去做"],["done","已实现"]]]
+    wish: { title: "旅行打卡", kicker: "CHECK-IN LIST", fields: [
+      ["title", "打卡项目", "text", true], ["category", "分类", "select", true, [["food","必吃"],["shopping","必买"],["experience","体验"],["photo","拍照"],["learning","学习"]]],
+      ["details", "推荐理由或提醒", "textarea"], ["status", "状态", "select", true, [["pending","待打卡"],["done","已完成"]]]
     ]},
     learning: { title: "每日学习", kicker: "LEARNING", fields: [
       ["trip_date", "日期", "date", true], ["title", "学习主题", "text", true], ["details", "学到的内容", "textarea", true],
@@ -788,6 +828,8 @@
       }
       const tab = event.target.closest("[data-journal-tab]");
       if (tab) { journalTab = tab.dataset.journalTab; render(); }
+      const wishFilter = event.target.closest("[data-wish-tab]");
+      if (wishFilter) { wishTab = wishFilter.dataset.wishTab; render(); }
     });
     $("#view").addEventListener("input", event => {
       if (event.target.id === "cnyAmount") {

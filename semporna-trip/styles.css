@@ -132,6 +132,9 @@ a { color: inherit; text-decoration: none; }
 .tabs { display:flex; gap:5px; margin-bottom:15px; padding:4px; overflow-x:auto; border-radius:11px; background:#eef3f1; }
 .tab { flex:0 0 auto; padding:7px 13px; border:0; border-radius:8px; color:var(--muted); background:transparent; cursor:pointer; font-size:9px; }
 .tab.active { color:var(--teal); background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.05); font-weight:750; }
+.recommendation-groups { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:start; }
+.recommendation-groups .card + .card { margin-top:0; }
+.group-copy { margin:5px 0 0; color:var(--muted); font-size:8px; line-height:1.5; }
 .journal-card { padding-left:19px; }
 .journal-card::before { content:""; position:absolute; top:15px; bottom:15px; left:7px; width:3px; border-radius:3px; background:var(--purple); }
 .expense-row { display:grid; grid-template-columns:1fr auto; gap:10px; }
@@ -215,6 +218,7 @@ a { color: inherit; text-decoration: none; }
   .main { padding:22px 16px 34px; }
   .metrics { grid-template-columns:1fr 1fr; }
   .content-grid { grid-template-columns:1fr; }
+  .recommendation-groups { grid-template-columns:1fr; }
   .mobile-nav { position:fixed; right:10px; bottom:9px; left:10px; z-index:30; display:flex; align-items:center; justify-content:space-around; padding:7px 9px; border:1px solid rgba(255,255,255,.7); border-radius:17px; background:rgba(255,255,255,.95); box-shadow:0 10px 30px rgba(17,61,56,.14); backdrop-filter:blur(12px); }
   .mobile-nav a { display:grid; place-items:center; gap:2px; color:var(--muted); font-size:7px; }
   .mobile-nav i { font-family:Georgia,serif; font-size:16px; font-style:normal; }

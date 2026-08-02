@@ -33,7 +33,7 @@
   const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   const routeTitles = {
     overview: "旅行总览", itinerary: "每日行程", wishlist: "旅行打卡",
-    journal: "学习与感悟", knowledge: "旅行知识", budget: "预算支出", checklist: "行前清单"
+    journal: "学习与感悟", budget: "预算支出", checklist: "行前清单"
   };
   const categoryNames = {
     transport: "交通", stay: "住宿", diving: "潜水", island: "跳岛", food: "美食", free: "自由活动",
@@ -48,7 +48,6 @@
   let wishTab = "all";
   let currentRoute = "overview";
   let cnyToMyrRate = Number(localStorage.getItem("semporna-cny-myr-rate")) || 0.60417;
-  let exchangeRateDate = localStorage.getItem("semporna-rate-date") || "参考汇率";
   let toastTimer;
 
   function sampleItems() {
@@ -574,54 +573,6 @@
       </section>`;
   }
 
-  function knowledgeView() {
-    const myrToCny = 1 / cnyToMyrRate;
-    return `
-      <div class="toolbar"><div><p>从汇率、语言、文化到海洋生态，为旅行建立更完整的理解。</p></div></div>
-      <section class="content-grid">
-        <div>
-          <article class="card exchange-card">
-            <div class="card-head"><h3>人民币 / 马币换算</h3><span class="tag">${esc(exchangeRateDate)}</span></div>
-            <div class="exchange-rate"><span>1 MYR</span><strong>≈ ${myrToCny.toFixed(3)} CNY</strong></div>
-            <div class="converter">
-              <label class="field"><span>人民币 CNY</span><input id="cnyAmount" type="number" min="0" step="0.01" value="100"></label>
-              <span>⇄</span>
-              <label class="field"><span>马币 MYR</span><input id="myrAmount" type="number" min="0" step="0.01" value="${(100 * cnyToMyrRate).toFixed(2)}"></label>
-            </div>
-            <p class="rate-note">在线参考汇率不包含银行、信用卡或换汇点手续费，实际成交价可能不同。</p>
-          </article>
-          <article class="card">
-            <div class="card-head"><h3>潜水学习路径</h3><span class="tag">OW → AOW</span></div>
-            <div class="list">
-              <article class="item-card"><div class="row-top">${tag("diving")}<small>基础</small></div><h4>压力、浮力与空气消耗</h4><p>深度增加时压力上升、空气体积缩小，空气消耗也会加快。保持缓慢呼吸并持续观察残压。</p></article>
-              <article class="item-card"><div class="row-top">${tag("diving")}<small>安全</small></div><h4>潜伴制度与禁飞间隔</h4><p>下水前完成潜伴检查，水下保持沟通。多次潜水后按电脑表和机构建议预留足够禁飞时间。</p></article>
-              <article class="item-card"><div class="row-top">${tag("island")}<small>环保</small></div><h4>负责任地观察海洋</h4><p>保持中性浮力，不触碰珊瑚、不喂食或追逐动物，也不要带走任何海洋生物。</p></article>
-            </div>
-          </article>
-        </div>
-        <div>
-          <article class="card">
-            <div class="card-head"><h3>常用马来语</h3><span class="tag">BAHASA MELAYU</span></div>
-            <div class="phrase-list">
-              <div><strong>Terima kasih</strong><span>谢谢</span></div>
-              <div><strong>Selamat pagi</strong><span>早上好</span></div>
-              <div><strong>Berapa harga?</strong><span>多少钱？</span></div>
-              <div><strong>Tolong</strong><span>请帮忙</span></div>
-              <div><strong>Saya tidak faham</strong><span>我不明白</span></div>
-            </div>
-          </article>
-          <article class="card">
-            <div class="card-head"><h3>在地知识</h3><span class="tag">SEMPORNA</span></div>
-            <div class="list">
-              <article class="item-card"><h4>时间与支付</h4><p>马来西亚与中国同为 UTC+8，无时差。常备少量马币现金，刷卡或换汇前确认手续费。</p></article>
-              <article class="item-card"><h4>天气与海况</h4><p>热带天气变化快，跳岛与潜点可能因风浪调整。防晒、补水并服从船员和潜导安排。</p></article>
-              <article class="item-card"><h4>尊重当地社区</h4><p>征得同意后再拍摄人物，了解当地生活背景，减少一次性塑料并妥善带走垃圾。</p></article>
-            </div>
-          </article>
-        </div>
-      </section>`;
-  }
-
   function budgetView() {
     const rows = list("expense").sort(sortByDate);
     const spent = totalExpenses();
@@ -767,7 +718,7 @@
     if (!routeTitles[currentRoute]) currentRoute = "overview";
     $("#pageTitle").textContent = routeTitles[currentRoute];
     $$("[data-route]").forEach(link => link.classList.toggle("active", link.dataset.route === currentRoute));
-    const views = { overview: overviewView, itinerary: itineraryView, wishlist: wishlistView, journal: journalView, knowledge: knowledgeView, budget: budgetView, checklist: checklistView };
+    const views = { overview: overviewView, itinerary: itineraryView, wishlist: wishlistView, journal: journalView, budget: budgetView, checklist: checklistView };
     $("#view").innerHTML = views[currentRoute]();
     renderSide();
   }
@@ -792,12 +743,10 @@
       const data = await response.json();
       if (!Number(data.rate)) throw new Error("汇率数据无效");
       cnyToMyrRate = Number(data.rate);
-      exchangeRateDate = `${data.date} 更新`;
       localStorage.setItem("semporna-cny-myr-rate", String(cnyToMyrRate));
-      localStorage.setItem("semporna-rate-date", exchangeRateDate);
       render();
     } catch {
-      // Keep the cached reference rate so the converter remains usable offline.
+      // Keep the cached reference rate for mixed-currency budget totals.
     }
   }
 
@@ -830,14 +779,6 @@
       if (tab) { journalTab = tab.dataset.journalTab; render(); }
       const wishFilter = event.target.closest("[data-wish-tab]");
       if (wishFilter) { wishTab = wishFilter.dataset.wishTab; render(); }
-    });
-    $("#view").addEventListener("input", event => {
-      if (event.target.id === "cnyAmount") {
-        $("#myrAmount").value = (Number(event.target.value || 0) * cnyToMyrRate).toFixed(2);
-      }
-      if (event.target.id === "myrAmount") {
-        $("#cnyAmount").value = (Number(event.target.value || 0) / cnyToMyrRate).toFixed(2);
-      }
     });
     $("#quickAdd").addEventListener("click", () => open("#quickModal"));
     $("#mobileAdd").addEventListener("click", () => open("#quickModal"));

@@ -1,0 +1,12 @@
+{
+  "name": "拾光学习库 (Static Site)",
+  "user": "ubuntu",
+  "install": "python3 --version",
+  "ports": [8000],
+  "terminals": [
+    {
+      "name": "web",
+      "command": "python3 -m http.server 8000 --bind 0.0.0.0"
+    }
+  ]
+}
